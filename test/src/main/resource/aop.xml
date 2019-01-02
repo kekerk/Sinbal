@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- /main/resource/aop.xml -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:p="http://www.springframework.org/schema/p"
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   					   http://www.springframework.org/schema/beans/spring-beans.xsd
+	   					   http://www.springframework.org/schema/aop
+	   					   http://www.springframework.org/schema/aop/spring-aop.xsd
+	                       http://www.springframework.org/schema/context
+	                       http://www.springframework.org/schema/context/spring-context.xsd">
+	<!-- Bean 객체 생성 -->
+	<bean id="write" class="chap7.spring.WriteImpl">
+		<constructor-arg><ref bean="articleDao"/></constructor-arg>
+	</bean>
+	<bean id="articleDao" class="chap7.spring.MariadbArticleDao"/>
+	<bean id="logging" class="chap7.spring.LoggingAspect"/>
+	<!-- 
+		aop 관련 용어
+		1.pointcut : 핵심알고리즘을 설정
+			execution(public * chap7.spring.*Impl.*(..)) : 실행시점 설정  [.*(..) : 매개변수 상관 없이]
+			=> chap7.spring 패키지의 클래스 중 이름이 Impl로 끝나는 클래스의 모든 public 메서드
+		2.aspect : AOP로 사용될 객체 지정.
+		3.advice : AOP로 실행될 메서드와 실행 순서를 지정.
+			1) around : 핵심알고리즘 실행 전, 후 모두 지정
+			2) before : 핵심알고리즘 실행 전 지정
+			3) after : 핵심알고리즘 실행 후 지정
+			4) afterReturning : 핵심알고리즘 정상 실행 후
+			5) afterThrowing : 핵심알고리즘 오류 발생 실행 후
+	 -->
+	<aop:config>
+		<aop:pointcut expression="execution(public * chap7.spring.*Impl.*(..))" id="servicepointcut"/>
+		<aop:aspect id="loggingAspect" ref="logging"> <!-- AOP 객체 생성 -->
+			<aop:around method="logging" pointcut-ref="servicepointcut"/><!--  logging method 호출 -->
+		</aop:aspect>
+	</aop:config>
+</beans>
