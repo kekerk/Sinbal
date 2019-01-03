@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" 
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" 
+	id="WebApp_ID" version="3.1">
+  <display-name>mavenshop4</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+<!-- 
+	DispatcherServlet : 모델2의 Controller의 역할을 하는 서블릿 servlet의 이름이 shop-1로 설정되었음.
+						/WEB-INF/shop-1-servlet.xml 설정파일로 인식함.
+						기본 xml의 이름은 서블릿이름-servlet.xml로 설정함.
+-->
+  <servlet>
+  	<servlet-name>shop-4</servlet-name>
+  	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  	<init-param>
+  		<param-name>contextConfigLocation</param-name>
+  		<param-value>
+  			classpath:spring-mvc.xml
+  			classpath:spring-db.xml
+  		</param-value>
+  		</init-param>
+  		<load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+  	<servlet-name>shop-4</servlet-name>
+  	<url-pattern>*.shop</url-pattern>
+  </servlet-mapping>
+<!-- 리스너 : 서블릿의 보조 역할. 
+	 ContextLoaderListener는 스프링 설정을 위한 보조 클래스임.
+	 기본 설정 xml은 /WEB-INF/apllicationContext.xml로 설정함.
+-->
+<!-- CharacterEncodingFilter : request의 파라미터 정보를 euc-kr로 인코딩 해주는 필터 -->
+  <filter>
+  	<filter-name>CharacterEncoding</filter-name>
+  	<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+  	<init-param>
+  		<param-name>encoding</param-name>
+  		<param-value>euc-kr</param-value>
+  	</init-param>
+  </filter>
+  <filter-mapping>
+  	<filter-name>CharacterEncoding</filter-name>
+  	<url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter>
+  	<filter-name>sitemesh</filter-name>
+  	<filter-class>com.opensymphony.sitemesh.webapp.SiteMeshFilter</filter-class>
+  </filter>
+   <filter-mapping>
+  	<filter-name>sitemesh</filter-name>
+  	<url-pattern>/*</url-pattern>
+  </filter-mapping>
+</web-app>
