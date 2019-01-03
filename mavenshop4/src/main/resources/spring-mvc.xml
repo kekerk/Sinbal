@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:p="http://www.springframework.org/schema/p"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xmlns:websocket="http://www.springframework.org/schema/websocket"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+      					   http://www.springframework.org/schema/beans/spring-beans.xsd
+      					   http://www.springframework.org/schema/mvc 
+      					   http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       					   http://www.springframework.org/schema/context 
+       					   http://www.springframework.org/schema/context/spring-context.xsd
+       					   http://www.springframework.org/schema/aop
+       					   http://www.springframework.org/schema/aop/spring-aop.xsd
+       					   http://www.springframework.org/schema/websocket
+       					   http://www.springframework.org/schema/websocket/spring-websocket-4.1.xsd">
+<!-- controller,logic,dao 패키지들에 속한 클래스가 @Component가 있는 경우 객체화 -->
+<context:component-scan base-package="controller,logic,dao,aop" />
+<!-- 유효성 검증을 어노테이션으로 처리하도록 설정 -->
+<mvc:annotation-driven />
+<aop:aspectj-autoproxy />
+<!-- http://localhost:8080/mavenshop3/item/list.shop
+	 item : ItemController 클래스 검색.
+	 URL 요청정보와 Controller를 이름으로 매핑하도록 설정 
+-->
+<bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping" />       					   
+<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+	<property name="basenames"><list><value>messages</value></list></property>
+</bean>
+<!-- view 결정자
+	View 위치를 지정
+	index : /WEB-INF/view/index.jsp
+-->
+<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	<property name="viewClass"><value>org.springframework.web.servlet.view.JstlView</value></property>
+	<property name="prefix"><value>/WEB-INF/view/</value></property>
+	<property name="suffix"><value>.jsp</value></property>
+</bean>
+<!-- 파일 업로드 관련 설정 -->
+<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" 
+	  p:maxUploadSize="104857600" p:maxInMemorySize="10485760" />
+<!-- 예외 처리 관련 설정 
+-->
+<bean id="exceptionHandler" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+	<property name="exceptionMappings">
+		<value>exception.CartEmptyException=exception
+			   exception.LoginException=exception
+			   exception.ShopException=exception</value>
+	</property>
+</bean>
+<bean id="echoHandler" class="websocket.EchoHandler" />
+<websocket:handlers>
+	<websocket:mapping handler="echoHandler" path="/chatting.shop"/>
+</websocket:handlers>
+</beans>

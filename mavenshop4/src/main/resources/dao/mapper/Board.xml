@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.mapper.BoardMapper">
+	<select id="list" resultType="Board" parameterType="map">
+		select num,name,pass,subject,content,file1 fileurl,regdate,readcnt,ref,reflevel,refstep from board
+		<if test="num != null">
+			where num=#{num}
+		</if>
+		<if test="searchType != null and searchContent != null">
+			where ${searchType} like '%${searchContent}%'
+		</if>
+		order by ref desc, refstep asc limit #{startrow}, #{limit}
+	</select>
+	<select id="selectcount" resultType="Integer" parameterType="map">
+		select count(*) from board
+		<if test="searchType != null and searchContent != null">
+			where ${searchType} like '%${searchContent}%'
+		</if>
+	</select>
+</mapper>
