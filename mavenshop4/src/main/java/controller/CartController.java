@@ -21,64 +21,74 @@ import logic.User;
 public class CartController {
 	@Autowired
 	ShopService service;
+	
 	@RequestMapping("cart/cartAdd")
-	public ModelAndView add(String id, Integer quantity, HttpSession session) {
-		//selectedItem : id°ª¿¡¼­ Item °´Ã¼¸¦ db¿¡¼­ ÀĞ¾î¼­ Item Á¤º¸ ÀúÀå
-		Item selectedItem = service.getItemById(id);
+	public ModelAndView add(Integer id, Integer quantity, HttpSession session) { //cartë¥¼ ì„¸ì…˜ìœ¼ë¡œë¶€í„° ë“±ë¡
+		// selectedItem : ìƒí’ˆIDê°’ì—ì„œ Item ê°ì²´ë¥¼ dbì—ì„œ ì½ì–´ì„œ Item ì •ë³´ ì €ì¥
+		
+		Item selectedItem = service.getItem(id);
 		Cart cart = (Cart)session.getAttribute("CART");
-		if(cart == null) { //µî·ÏµÈ Àå¹Ù±¸´Ï »óÇ°ÀÌ ¾ø´Ù.
+		if(cart == null) { //ë“±ë¡ëœ ì¥ë°”êµ¬ë‹ˆ ìƒí’ˆì´ ì—†ë‹¤.
 			cart = new Cart();
-			session.setAttribute("CART", cart); //empty Cart°´Ã¼¸¦ sessionÀúÀå
+			session.setAttribute("CART", cart); //empty Cart ê°ì²´ë¥¼ sessionì— ì €ì¥
 		}
-		cart.push(new ItemSet(selectedItem,quantity));
+		cart.push(new ItemSet(selectedItem,quantity));  
 		ModelAndView mav = new ModelAndView("cart/cart");
-		mav.addObject("message", selectedItem.getName() + "À»/¸¦" + quantity + "°³¸¦ Àå¹Ù±¸´Ï¿¡ Ãß°¡");
+		mav.addObject("message",selectedItem.getName()+" "+quantity+"ê°œë¥¼ ì¥ë°”êµ¬ë‹ˆì— ì¶”ê°€");
 		mav.addObject("cart",cart);
 		return mav;
+	
+	
 	}
-	@RequestMapping("cart/cartDelete")
-	public ModelAndView add(Integer index, HttpSession session) {
+	@RequestMapping("cart/cancel")
+	public ModelAndView cancel(Integer index, HttpSession session) {
 		Cart cart = (Cart)session.getAttribute("CART");
 		ModelAndView mav = new ModelAndView("cart/cart");
 		int idx = index;
 		ItemSet delete = null;
 		try {
 			delete = cart.getItemSetList().remove(idx);
-			mav.addObject("message",delete.getItem().getName() + "»óÇ°À» Àå¹Ù±¸´Ï¿¡¼­ Á¦°ÅÇÔ");
-		} catch(Exception e) {
-			mav.addObject("message", "»óÇ°À» Àå¹Ù±¸´Ï¿¡¼­ Á¦°Å ½ÇÆĞ");
+			mav.addObject("message",delete.getItem().getName()+"ìƒí’ˆì„ ì¥ë°”êµ¬ë‹ˆì—ì„œ ì œê±°í•¨");
+		}catch(Exception e) {
+			mav.addObject("message","ìƒí’ˆì„ ì¥ë°”êµ¬ë‹ˆì—ì„œ ì œê±° ì‹¤íŒ¨");
 		}
-		mav.addObject("cart",cart);
-		return mav;		
-	}
-	@RequestMapping("cart/cartView")
-	public ModelAndView add1(HttpSession session) {
-		Cart cart = (Cart)session.getAttribute("CART");
-		if(cart == null || cart.isEmpty()) { //µî·ÏµÈ Àå¹Ù±¸´Ï »óÇ°ÀÌ ¾ø´Ù.
-			throw new CartEmptyException("Àå¹Ù±¸´Ï¿¡ »óÇ°ÀÌ ¾ø½À´Ï´Ù.","../item/list.shop");
-		}
-		ModelAndView mav = new ModelAndView("cart/cart");
 		mav.addObject("cart",cart);
 		return mav;
 	}
-	@RequestMapping("cart/checkout")
-	public String checkout(HttpSession session) { //CartAspect Aop ´ë»óÀÌ µÇ´Â ÇÙ½É¸Ş¼­µå
-		return "cart/checkout";
-	}
-	//ÁÖ¹® È®Á¤
-	//1. ÁÖ¹®Å×ÀÌºí¿¡ ÀúÀå
-	//2. Àå¹Ù±¸´Ï¿¡ »óÇ°À» Á¦°ÅÇÏ±â
-	@RequestMapping("cart/end")
-	public ModelAndView checkend(HttpSession session) { //CartAspect Aop ´ë»óÀÌ µÇ´Â ÇÙ½É¸Ş¼­µå
-		ModelAndView mav = new ModelAndView();
+	
+	@RequestMapping("cart/cartView")
+	public ModelAndView cartView(HttpSession session) throws CartEmptyException {
 		Cart cart = (Cart)session.getAttribute("CART");
-		User loginUser = (User)session.getAttribute("loginUser");
-		//sale : ±¸¸Å °í°´Á¤º¸, ±¸¸Å»óÇ° Á¤º¸ µîÀ» ÀúÀåÇÑ °´Ã¼
-		Sale sale = service.checkEnd(loginUser, cart); //ÁÖ¹® »óÇ°À» db¿¡ ÀúÀåÇÏ±â
+		if(cart == null || cart.isEmpty()) { //ë“±ë¡ëœ ì¥ë°”êµ¬ë‹ˆ ìƒí’ˆì´ ì—†ë‹¤.
+			throw new CartEmptyException ("ì¥ë°”êµ¬ë‹ˆì— itemì´ ì—†ìŠµë‹ˆë‹¤.","../item/list.shop");
+		}
+		ModelAndView mav = new ModelAndView("cart/cart");
+		mav.addObject("cart",cart);
+		mav.addObject("message","ì¥ë°”êµ¬ë‹ˆì— ì ‘ì†í–ˆìŠµë‹ˆë‹¤.");
+		return mav;
+	}
+	/*
+	 * checkout : viewë‹¨ì„ checkoutìœ¼ë¡œ ë³´ë‚´ë¼.
+	 */
+	@RequestMapping("cart/checkout")
+	public String checkout(HttpSession session) {	//CartAspect AOP ëŒ€ìƒì´ ë˜ëŠ” í•µì‹¬ ë©”ì„œë“œ
+		return "cart/checkout";
+		
+	}
+	//ì£¼ë¬¸ í™•ì •
+	//1. ì£¼ë¬¸í…Œì´ë¸”ì— í•´ë‹¹ ë‚´ìš© ì €ì¥
+	//2. ì¥ë°”êµ¬ë‹ˆì˜ ìƒí’ˆ ì œê±°
+	@RequestMapping("cart/end") 
+	public ModelAndView checkend(HttpSession session) { //CartAspect AOP ëŒ€ìƒì´ ë˜ëŠ” í•µì‹¬ ë©”ì„œë“œ
+		ModelAndView mav = new ModelAndView();
+		Cart cart = (Cart) session.getAttribute("CART");
+		User loginUser = (User) session.getAttribute("loginUser");
+		// sale : êµ¬ë§¤ê³ ê°ì •ë³´, êµ¬ë§¤ìƒí’ˆì •ë³´ ë“±ì„ ì €ì¥í•œ ê°ì²´
+		Sale sale = service.checkEnd(loginUser,cart);//ì£¼ë¬¸ìƒí’ˆì„ dbì— ì €ì¥í•˜ê¸°
 		List<ItemSet> itemSetList = cart.getItemSetList();
 		int tot = cart.getTotalAmount();
-		cart.clearAll(session); //Àå¹Ù±¸´Ï »óÇ° Á¦°Å
-		mav.addObject("sale", sale);
+		cart.clearAll(session);//ì¥ë°”êµ¬ë‹ˆ ë¹„ìš°ê¸°
+		mav.addObject("sale",sale);
 		mav.addObject("totalAmount", tot);
 		return mav;
 	}

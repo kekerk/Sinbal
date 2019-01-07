@@ -6,8 +6,8 @@ import logic.SaleItem;
 
 public interface SaleItemMapper {
 
-	@Insert("insert into saleitem (saleid, saleitemid, itemid, quantity, updatetime) "
-				+ "values(#{saleId}, #{saleItemId}, #{item.id}, #{quantity}, #{updateTime})")
-	void insert(SaleItem s);
+	@Insert("insert into saleitem (saleid,saleitemid,itemid,quantity,updatetime)"
+					 + " values (#{saleId},#{saleItemId},#{item.id},#{quantity},#{updateTime})")
+	void insert(SaleItem is);
 
 }

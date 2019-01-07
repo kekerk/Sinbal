@@ -3,6 +3,7 @@ package controller;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,32 +21,36 @@ import logic.ShopService;
 public class BoardController {
 	@Autowired
 	private ShopService service;
-	
+	//http://localhost:8080/mavenshop3/board/list.shop
 	@RequestMapping(value="board/*", method=RequestMethod.GET)
-	public ModelAndView getboard(Integer num, HttpServletRequest request) {
+	public ModelAndView getboard(Integer num,HttpServletRequest request) {
 		ModelAndView mav = new ModelAndView();
-		Board board = new Board();
+		Board board= new Board();
 		if(num != null) {
-			board = service.getBoard(num,request);
+			if(request.getRequestURI().contains("detail")) {
+				service.reatCnt(num);
+			}
+			board = service.selectBoard(num);
 		}
 		mav.addObject("board",board);
 		return mav;
 	}
-	@RequestMapping(value="board/list")
+	
+	@RequestMapping("board/list")
 	public ModelAndView list(Integer pageNum, String searchType, String searchContent) {
 		if(pageNum == null || pageNum.toString().equals("")) {
 			pageNum = 1;
 		}
 		ModelAndView mav = new ModelAndView();
-		int limit = 10; //ÇÑ ÆäÀÌÁö¿¡ Ãâ·ÂÇÒ °Ô½Ã¹° °¹¼ö
-		int listcount = service.boardcount(searchType, searchContent);
-		//boardlist : ÇÑ ÆäÀÌÁö¿¡ Ãâ·ÂÇÒ °Ô½Ã¹° Á¤º¸ ÀúÀå
-		List<Board> boardlist = service.boardlist(searchType, searchContent, pageNum, limit);
-		int maxpage = (int)((double)listcount/limit + 0.95); //ÀüÃ¼ ÆäÀÌÁö ¼ö
-		int startpage = ((int)((pageNum/10.0 + 0.9) -1)) * 10 + 1; //È­¸é¿¡ Ç¥½ÃµÉ ½ÃÀÛ ÆäÀÌÁö ¼ö
-		int endpage = startpage + 9; //È­¸é¿¡ Ç¥½ÃµÉ ¸¶Áö¸· ÆäÀÌÁö ¼ö
+		int limit = 10; //í•œí˜ì´ì§€ì— ì¶œë ¥í•  ê²Œì‹œë¬¼ ê°œìˆ˜
+		//ì´ ê²Œì‹œë¬¼ ê±´ìˆ˜
+		int listcount = service.boardcount(searchType,searchContent);
+		List<Board> boardlist = service.boardList(searchType,searchContent,pageNum,limit);
+		int maxpage=(int)((double)listcount/limit + 0.95);
+		int startpage=((int)((pageNum/10.0+0.9)-1))*10+1;
+		int endpage = startpage+9;
 		if(endpage > maxpage) endpage = maxpage;
-		int boardcnt = listcount - (pageNum -1) * limit; //È­¸é Ãâ·Â½Ã º¸¿©Áö´Â °Ô½Ã¹° ¼ø¼­
+		int boardcnt = listcount-(pageNum-1)*limit;
 		mav.addObject("pageNum", pageNum);
 		mav.addObject("maxpage", maxpage);
 		mav.addObject("startpage", startpage);
@@ -55,6 +60,17 @@ public class BoardController {
 		mav.addObject("boardcnt", boardcnt);
 		return mav;
 	}
+
+//	@RequestMapping("board/detail")
+//	public ModelAndView detail(int num,HttpServletRequest request) {
+//	ModelAndView mav = new ModelAndView();
+//	System.out.println(request.getRequestURI());
+//	service.reatCnt(num);
+//	Board board = service.selectBoard(num);
+//	mav.addObject("board",board);
+//	return mav;
+//	}
+	
 	@RequestMapping(value="board/write", method=RequestMethod.POST)
 	public ModelAndView write(@Valid Board board, BindingResult bindResult, HttpServletRequest request) {
 		ModelAndView mav = new ModelAndView();
@@ -63,25 +79,25 @@ public class BoardController {
 			return mav;
 		}
 		try {
-			service.insert(board, request);
-			mav.setViewName("redirect:list.shop");
-			mav.addObject("board",board);
-		} catch(Exception e) {
+			service.write(board,request);
+			mav.addObject("board", board);
+			mav.setViewName("redirect:/board/list.shop");
+		}catch(Exception e) {
 			e.printStackTrace();
-			throw new ShopException("°Ô½Ã¹° µî·Ï ½ÇÆĞ","write.shop");
+			throw new ShopException("ê²Œì‹œë¬¼ ë“±ë¡ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.","write.shop");
 		}
 		return mav;
 	}
+	
 	/*
-	 * ´ä±Û µî·Ï
-	 * 1. À¯È¿¼º °ËÁõ
-	 * 2. ´ä±Ûdb¿¡ µî·Ï
-	 * 	    ¿ø°Ô½Ã±Û Á¤º¸ Áß ref´Â ´ä±Û Á¤º¸ÀÇ ref °ª
-	 *    ¿ø°Ô½Ã±Û Á¤º¸ Áß reflevel´Â ´ä±Û Á¤º¸ÀÇ reflevel+1 °ª
-	 *    ¿ø°Ô½Ã±Û Á¤º¸ Áß refstep´Â ´ä±Û Á¤º¸ÀÇ refstep+1 °ª
-	 *    => ÀÛ¾÷ Àü ±âÁ¸ÀÇ ¿ø±ÛÀÇ refstep º¸´Ù Å« ¸ğµç ·¹ÄÚµåµéÀ» refstep+1·Î ¼öÁ¤ÇÏ±â
-	 * 3. µî·Ï ÈÄ list.shop ¿äÃ»ÇÏ±â
-	 *    
+	 * ë‹µê¸€ ë“±ë¡
+	 * 1. ìœ íš¨ì„± ê²€ì¦
+	 * 2. ë‹µê¸€ì„ DBì— ë“±ë¡
+	 * 	   ì›ê¸€ ì •ë³´ ì¤‘ refëŠ” ë‹µê¸€ì˜ refê°’
+	 *   ì›ê¸€ ì •ë³´ ì¤‘ reflevelì€ ë‹µê¸€ì˜ reflevel+1 ê°’
+	 *   ì›ê¸€ ì •ë³´ ì¤‘ refstepì€ ë‹µê¸€ì˜ refstep+1 ê°’
+	 *        => ì‘ì—… ì „ ê¸°ì¡´ì˜ ì›ê¸€ì˜ refstepë³´ë‹¤ í° ë ˆì½”ë“œë“¤ì„ refstep+1ë¡œ ìˆ˜ì •í•˜ê¸°  
+	 * 3. ë“±ë¡ í›„ list.shopìœ¼ë¡œ ì´ë™
 	 */
 	@RequestMapping(value="board/reply", method=RequestMethod.POST)
 	public ModelAndView reply(@Valid Board board, BindingResult bindResult, HttpServletRequest request) {
@@ -90,51 +106,60 @@ public class BoardController {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
-		service.replyAdd(board);
-		mav.addObject("board",board);
-		mav.setViewName("redirect:list.shop");
+		try {
+			service.write(board,request); 
+			mav.addObject("board", board);
+			mav.setViewName("redirect:/board/list.shop");
+		}catch(Exception e) {
+			e.printStackTrace();
+			throw new ShopException("ê²Œì‹œë¬¼ ë‹µê¸€ ë“±ë¡ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.","reply.shop?num="+board.getNum());
+		}
 		return mav;
 	}
+	
 	@RequestMapping(value="board/update", method=RequestMethod.POST)
-	public ModelAndView update(@Valid Board board, BindingResult bindResult, String file2, HttpServletRequest request) {
+	public ModelAndView update(@Valid Board board,String file2,BindingResult bindResult,HttpServletRequest request) {
 		ModelAndView mav = new ModelAndView();
-		Board b = service.getBoard(board.getNum(), request);
+		Board dbboard = service.selectBoard(board.getNum());
+		String pass = request.getParameter("pass");
 		if(bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
-			mav.addObject("board",b);
+			board.setFileurl(file2);
+			mav.addObject("board",board);
 			return mav;
 		}
-		if(!b.getPass().equals(board.getPass())) {
-			throw new ShopException("ºñ¹Ğ¹øÈ£°¡ Æ²¸³´Ï´Ù.","update.shop?num="+board.getNum());
+		if(!pass.equals(dbboard.getPass())) {
+			bindResult.reject("error.board.password");
+			mav.getModel().putAll(bindResult.getModel());
+			board.setFileurl(file2);
+			mav.addObject("board",board);
+			return mav;
 		}
 		board.setFileurl(file2);
 		try {
-			service.boardupdate(board, request);
-			mav.setViewName("redirect:list.shop");
-			mav.addObject("board",board);
-		} catch(Exception e) {
+				service.updateboard(board,request);
+				Board updateboard = service.selectBoard(board.getNum());
+				mav.addObject("board", updateboard);
+				mav.setViewName("redirect:/board/detail.shop?num="+board.getNum());	
+			
+		}catch(Exception e) {
 			e.printStackTrace();
-			throw new ShopException("¼öÁ¤ ½ÇÆĞ.","update.shop?num="+board.getNum());
+			throw new ShopException("ê²Œì‹œë¬¼ ìˆ˜ì •ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.","update.shop?num="+board.getNum());
 		}
 		return mav;
-	}
-	@RequestMapping(value="board/delete", method=RequestMethod.POST)
-	public ModelAndView delete(Board board, HttpServletRequest request) {
-		ModelAndView mav = new ModelAndView();
-		Board b = service.getBoard(board.getNum(), request);
-		if(!b.getPass().equals(board.getPass())) {
-			throw new ShopException("ºñ¹Ğ¹øÈ£°¡ Æ²¸³´Ï´Ù.","delete.shop?num="+board.getNum());
-		}
-		try {
-			service.boarddelete(board);
-			mav.setViewName("redirect:list.shop");
-			mav.addObject("board",board);
-		} catch(Exception e) {
-			e.printStackTrace();
-			throw new ShopException("»èÁ¦ ½ÇÆĞ.","delete.shop?num="+board.getNum());
-		}
-		return mav;
-		
 	}
 	
+	@RequestMapping(value="board/delete", method = RequestMethod.POST)
+	public ModelAndView delete(Integer num, HttpSession session,HttpServletRequest request) {
+		ModelAndView mav = new ModelAndView();
+		Board board = service.selectBoard(num);
+		String pass = request.getParameter("pass");
+		if(!pass.equals(board.getPass())) {
+			throw new ShopException("ë¹„ë°€ë²ˆí˜¸ê°€ í‹€ë ¸ìŠµë‹ˆë‹¤.", "delete.shop?num="+board.getNum());
+		}else {
+			service.deleteboard(num);
+			mav.setViewName("redirect:/board/list.shop");
+		}
+		return mav;
+	}
 }

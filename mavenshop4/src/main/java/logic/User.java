@@ -2,78 +2,94 @@ package logic;
 
 import java.util.Date;
 
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
 public class User {
-	@Size(min=3, max=10, message="¾ÆÀÌµğ´Â 3ÀÚÀÌ»ó 10ÀÚ ÀÌÇÏ·Î ÀÔ·ÂÇÏ¼¼¿ä.")
-	private String userId;
-	@Size(min=3, max=12, message="ºñ¹Ğ¹øÈ£´Â 3ÀÚÀÌ»ó 12ÀÚ ÀÌÇÏ·Î ÀÔ·ÂÇÏ¼¼¿ä.")
-	private String password;
-	@NotEmpty(message="»ç¿ëÀÚ ÀÌ¸§Àº ÇÊ¼ö ÀÔ´Ï´Ù.")
-	private String userName;
-	private String phoneNo;
-	private String postcode;
-	private String address;
-	private String email;
-	@Past(message="»ıÀÏÀº °ú°Å ³¯Â¥¸¸ °¡´ÉÇÕ´Ï´Ù.")
-	private Date birthDay;
+	   @Size(min=3, max=10, message="ì•„ì´ë””ëŠ” 3ìì´ìƒ 10ì ì´í•˜ë¡œ ì…ë ¥í•˜ì„¸ìš”")
+	   private String userId;
+	   @Size(min=3, max=12, message="ë¹„ë°€ë²ˆí˜¸ëŠ” 3ìì´ìƒ 12ì ì´í•˜ë¡œ ì…ë ¥í•˜ì„¸ìš”")
+	   private String password;
+	   @NotEmpty(message="ì‚¬ìš©ì ì´ë¦„ì€ í•„ìˆ˜ ì…ë‹ˆë‹¤.")
+	   private String userName;
+	   private String phoneNo;
+	   private String postcode;
+	   private String address;
+	   private String email;
+	   @Past(message="ìƒì¼ì€ ê³¼ê±° ë‚ ì§œë§Œ ê°€ëŠ¥í•©ë‹ˆë‹¤.")
+	   private Date birthDay;
+
 	public String getUserId() {
 		return userId;
 	}
+
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
+
 	public String getPassword() {
 		return password;
 	}
+
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
 	public String getUserName() {
 		return userName;
 	}
+
 	public void setUserName(String userName) {
 		this.userName = userName;
 	}
+
 	public String getPhoneNo() {
 		return phoneNo;
 	}
+
 	public void setPhoneNo(String phoneNo) {
 		this.phoneNo = phoneNo;
 	}
+
 	public String getPostcode() {
 		return postcode;
 	}
+
 	public void setPostcode(String postcode) {
 		this.postcode = postcode;
 	}
+
 	public String getAddress() {
 		return address;
 	}
+
 	public void setAddress(String address) {
 		this.address = address;
 	}
+
 	public String getEmail() {
 		return email;
 	}
+
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
 	public Date getBirthDay() {
 		return birthDay;
 	}
+
 	public void setBirthDay(Date birthDay) {
 		this.birthDay = birthDay;
 	}
+
 	@Override
 	public String toString() {
 		return "User [userId=" + userId + ", password=" + password + ", userName=" + userName + ", phoneNo=" + phoneNo
 				+ ", postcode=" + postcode + ", address=" + address + ", email=" + email + ", birthDay=" + birthDay
 				+ "]";
 	}
-	
 }

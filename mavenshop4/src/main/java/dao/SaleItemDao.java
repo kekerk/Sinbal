@@ -20,17 +20,20 @@ import logic.SaleItem;
 
 @Repository
 public class SaleItemDao {
+
+	
 	@Autowired
 	private SqlSessionTemplate sqlSession;
-	private final String NS = "dao.mapper.SaleItemMapper.";
+	private final String NS="dao.mapper.SaleItemMapper.";
 	
-	public void insert(SaleItem s) {
-		sqlSession.getMapper(SaleItemMapper.class).insert(s);
+	public void insert(SaleItem is) {
+		sqlSession.getMapper(SaleItemMapper.class).insert(is);
+		
 	}
-	public List<SaleItem> list(Integer saleId) {
-		Map<String,Integer> map = new HashMap<String,Integer>();
-		map.put("saleid", saleId);
-		return sqlSession.selectList(NS + "list",map);
+	public List<SaleItem> SaleItemlist(Integer saleId) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("saleId", saleId);
+		return sqlSession.selectList(NS+"list", map);
 	}
 
 }

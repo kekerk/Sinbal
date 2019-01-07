@@ -1,5 +1,8 @@
 package logic;
 
+
+
+
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -9,23 +12,20 @@ import org.springframework.web.multipart.MultipartFile;
 
 public class Item {
 	private Integer id;
-	@NotEmpty(message="»óÇ°¸íÀ» µî·ÏÇÏ¼¼¿ä") //NotNull ÀÇ¹Ì + ºó¹®ÀÚ¿­ÀÇ ÀÇ¹Ì
+	@NotEmpty(message="ìƒí’ˆëª…ì„ ë“±ë¡í•˜ì„¸ìš”") //@NotEmpty : NotNull ì˜ë¯¸ + ë¹ˆ ë¬¸ìì—´ì˜ ì˜ë¯¸
 	private String name;
-	@NotNull(message="°¡°İÀ» µî·ÏÇÏ¼¼¿ä")
-	@Min(value=10, message="°¡°İÀº 10¿ø ÀÌ»ó °¡´ÉÇÕ´Ï´Ù.")
-	@Max(value=100000, message="°¡°İÀº 10¸¸¿ø ÀÌÇÏ¸¸ °¡´ÉÇÕ´Ï´Ù.")
+	@NotNull(message="ê°€ê²©ì„ ë“±ë¡í•˜ì„¸ìš”") // ì •ìˆ˜í˜• ê°’ì´ë¼ NotEmpty ì‚¬ìš© ë¶ˆê°€
+	@Min(value=10, message="ê°€ê²©ì€ 10ì› ì´ìƒ ê°€ëŠ¥í•©ë‹ˆë‹¤.")
+	@Max(value=100000, message="ê°€ê²©ì€ 10ë§Œì› ì´í•˜ë§Œ ê°€ëŠ¥í•©ë‹ˆë‹¤.") 
 	private Integer price;
-	@NotEmpty(message="»óÇ°³»¿ëÀ» µî·ÏÇÏ¼¼¿ä")
+	@NotEmpty(message="ìƒí’ˆ ë‚´ìš©ì„ ë“±ë¡í•˜ì„¸ìš”")
 	private String description;
 	private String pictureUrl;
-	//UPLOADµÈ ÆÄÀÏÀÇ ³»¿ëÀ» ÀúÀå : shop-3-servlet.xmlÀÇ multipartResolver beanÀÌ °ü¿©
-	private MultipartFile picture; //<input type="file" name="picture"> ÀÎ ÆÄÀÏÀÇ ³»¿ë ÀúÀå
-	public MultipartFile getPicture() {
-		return picture;
-	}
-	public void setPicture(MultipartFile picture) {
-		this.picture = picture;
-	}
+	// uploadëœ íŒŒì¼ì˜ ë‚´ìš©ì„ ì €ì¥ -> shop-3-servlet.xmlì˜ multipartResolver beanì´ ê´€ì—¬
+	private MultipartFile picture; //<input type="file" name="picture">ì¸ íŒŒì¼ì˜ ë‚´ìš© ì €ì¥
+
+	//getter setter toString
+	
 	public Integer getId() {
 		return id;
 	}
@@ -56,10 +56,18 @@ public class Item {
 	public void setPictureUrl(String pictureUrl) {
 		this.pictureUrl = pictureUrl;
 	}
+
+	public MultipartFile getPicture() {
+		return picture;
+	}
+	public void setPicture(MultipartFile picture) {
+		this.picture = picture;
+	}
+	
 	@Override
 	public String toString() {
 		return "Item [id=" + id + ", name=" + name + ", price=" + price + ", description=" + description
 				+ ", pictureUrl=" + pictureUrl + "]";
 	}
-	
+
 }

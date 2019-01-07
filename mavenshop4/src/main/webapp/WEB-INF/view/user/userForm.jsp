@@ -82,7 +82,7 @@
 		<tr height="40px"><td>이메일</td><td><form:input path="email"/>&nbsp;<font color="red"><form:errors path="email" /></font></td></tr>
 		<tr height="40px"><td>생년월일</td><td><form:input path="birthDay"/>&nbsp;<font color="red"><form:errors path="birthDay" /></font></td></tr>
 		<tr height="40px"><td colspan="2" align="center">
-			<input type="submit" value="등록">&nbsp;<input type="reset" value="초기화"></td></tr>
+			<input type="submit" value="등록" class="w3-button w3-middle w3-theme"><input type="reset" class="w3-button w3-right w3-theme" value="초기화"></td></tr>
 	</table>
 </form:form>
 </body>

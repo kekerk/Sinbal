@@ -17,24 +17,28 @@ import org.springframework.stereotype.Repository;
 
 import dao.mapper.SaleMapper;
 import logic.Sale;
+import logic.SaleItem;
 
 @Repository
 public class SaleDao {
 	@Autowired
 	private SqlSessionTemplate sqlSession;
-	private final String NS = "dao.mapper.SaleMapper.";
+	private final String NS="dao.mapper.SaleMapper.";
 	
 	public Integer getMaxSaleId() {
-		Integer ret = sqlSession.getMapper(SaleMapper.class).maxId();
-		return ret+1;
+		Integer ret = sqlSession.getMapper(SaleMapper.class).maxSaleId();
+		return ++ret;
 	}
+
 	public void insert(Sale sale) {
 		sqlSession.getMapper(SaleMapper.class).insert(sale);
 	}
-	public List<Sale> list(String id) {
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("userid", id);
-		return sqlSession.getMapper(SaleMapper.class).list(map);
+	
+	public List<Sale> Salelist(String userid) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("userId", userid);
+		return sqlSession.selectList(NS+"list", map);
 	}
 	
+
 }

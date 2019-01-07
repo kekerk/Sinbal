@@ -9,16 +9,17 @@ import org.apache.ibatis.annotations.Update;
 import logic.User;
 
 public interface UserMapper {
-
-	@Insert("insert into user_backup (userid,password,username,phoneno,postcode,address,email,birthday) " 
-				+"values(#{userId},#{password},#{userName},#{phoneNo},#{postcode},#{address},#{email},#{birthDay})")
+	
+	@Insert("insert into user_backup (userid, username, password, birthday, phoneno, postcode, address, email)"
+				+ " values (#{userId}, #{userName}, #{password}, #{birthDay}, #{phoneNo}, #{postcode}, #{address}, #{email})")
 	void insert(User user);
 
-	@Update("update user_backup set username=#{userName},phoneno=#{phoneNo}"
-			+",postcode=#{postcode},address=#{address},email=#{email},birthday=#{birthDay} where userid=#{userId}")
+	@Update("update user_backup set username=#{userName},birthday=#{birthDay},phoneno=#{phoneNo},postcode=#{postcode},address=#{address},email=#{email} where userid=#{userId}")
 	void update(User user);
 
 	@Delete("delete from user_backup where userid=#{userId}")
-	void delete(Map<String, String> map);
+	void delete(Map<String, Object> map);
 
+		
 }
+ 

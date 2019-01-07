@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ChatController {
 	@RequestMapping("chat/chat")
 	public String chat() {
-		return null; // viewÀÌ¸§ ¼³Á¤. nullÀÎ °æ¿ì urlÀÌ  "chat/chat"ÀÌ¹Ç·Î, view´Â chat/chat.jsp·Î ¼³Á¤ 
+		return null;//ì›ë˜ëŠ” "chat/chat" : viewì´ë¦„ ì„¤ì •. nullì„ ë„£ì–´ë„ chat/chat.jspë¡œ ì´ë™í•œë‹¤.(nullì¸ ê²½ìš° urlì´ "chat/chat"ì´ë¯€ë¡œ, viewëŠ” chat/chat.jspë¡œ ì„¤ì •
 	}
 }

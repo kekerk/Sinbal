@@ -13,61 +13,78 @@ import org.springframework.web.servlet.ModelAndView;
 
 import logic.Item;
 import logic.ShopService;
-
-@Controller //@Component + Controller ±â´É ºÎ¿©.
+// í•˜ë‚˜ì˜ Controller ì•ˆì—ì„œ @RequestMappingì„ í†µí•´ ê°œë³„ Controller ê¸°ëŠ¥ ì‚¬ìš©
+/*
+ * @Controller = @Component(ë‚˜ë¥¼ ê°ì²´í™”) + Controller ê¸°ëŠ¥ ë¶€ì—¬.
+ */
+@Controller
 public class ItemController {
 	@Autowired
 	private ShopService service;
+
+	
 	@RequestMapping("item/list")
 	public ModelAndView list() {
-		//itemList : Item Å×ÀÌºíÀÇ ¸ğµç ·¹ÄÚµå¸¦ °¡Áö°í ÀÖ´Â List °´Ã¼
-		List<Item> itemList = service.getItemList();
-		ModelAndView mav = new ModelAndView(); //view µî·Ï ¾ÈÇÔ : "item/list"°¡ ±âº» view
+		// itemList  : Item í…Œì´ë¸”ì˜ ëª¨ë“  ë ˆì½”ë“œë¥¼ ì €ì¥í•˜ê³  ìˆëŠ” List ê°ì²´
+		List<Item> itemList = service.getItemList(); 
+		//ê°ì²´ë¥¼ viewë‹¨ìœ¼ë¡œ ì „ë‹¬
+		ModelAndView mav = new ModelAndView(); //view ë“±ë¡ ì•ˆí•¨ : "item/list"ê°€ ê¸°ë³¸ view 
 		// /WEB-INF/view/item/list.jsp
 		mav.addObject("itemList",itemList);
 		return mav;
 	}
-	@RequestMapping("item/*")//*:¸ÅÄª µÇ´Â ÀÌ¸§ÀÌ ¾øÀ¸¸é ½ÇÇà
-	public ModelAndView detail(String id) { //id : "id"ÆÄ¶ó¹ÌÅÍ °ªÀ» ÀúÀåÇÔ
-		Item item = service.getItemById(id);
-		ModelAndView mav = new ModelAndView();
-		mav.addObject("item",item);
+
+	// @RequestMapping("item/*") 
+	@RequestMapping("item/*") //itemControllerë¥¼ ê²€ìƒ‰í•˜ì—¬ detail ë¶€ë¶„ ë©”ì„œë“œë¥¼ ì°¾ìŒ.
+	public ModelAndView detail(Integer id) { //id íŒŒë¼ë¯¸í„° ê°’ì„ ì €ì¥í•¨.(íŒŒë¼ë¯¸í„° ì´ë¦„ê³¼ ë§¤ê°œë³€ìˆ˜ ì´ë¦„ì´ ê°™ì•„ì•¼ í•¨)
+		/*
+		 * ë§¤ê°œë³€ìˆ˜ë¥¼ HttpServletRequest requestë¡œ ì„ ì–¸í•˜ë©´ 
+		 * String id = request.getParameter("id");ë¡œ requestê°ì²´ë¥¼ idë¼ëŠ” ë³€ìˆ˜ë¡œ ì„ ì–¸ ë° ì´ˆê¸°í™”ë¥¼ í•´ì•¼í•œë‹¤.
+		 */
+		Item item = service.getItem(id);
+		ModelAndView mav = new ModelAndView(); //view ë“±ë¡ ì•ˆí•¨ : "item/detail"ê°€ ê¸°ë³¸ view 
+		// /WEB-INF/view/item/detail.jsp
+		mav.addObject("item",item);//setAttribute ê¸°ëŠ¥
 		return mav;
 	}
+	
 	@RequestMapping("item/create")
 	public ModelAndView create() {
-		ModelAndView mav = new ModelAndView("item/add");
+		ModelAndView mav = new ModelAndView("item/add"); //Mappingëª…ê³¼ methodëª…ì´ ë‹¤ë¥´ë¯€ë¡œ  new ModelAndView("item/add") ë¡œ í•œë‹¤.
 		mav.addObject(new Item());
 		return mav;
 	}
+	
 	@RequestMapping("item/register")
 	public ModelAndView register(@Valid Item item, BindingResult bindResult, HttpServletRequest request) {
-		//@Valid : À¯È¿¼º °ËÁõ. Item Å¬·¡½º¿¡ Á¤ÀÇµÈ ³»¿ëÀ¸·Î °ËÁõÀ» ÇÔ
-		//item °´Ã¼ : ÆÄ¶ó¹ÌÅÍ Á¤º¸¿Í ¾÷·ÎµåµÈ ÆÄÀÏ³»¿ëÀ» ÀúÀå
-		ModelAndView mav = new ModelAndView("item/add");
+		// item ê°ì²´ : íŒŒë¼ë¯¸í„° ì •ë³´ì™€ ì—…ë¡œë“œëœ íŒŒì¼ ë‚´ìš©ì„ ì €ì¥
+		// @Valid : ìœ íš¨ì„± ê²€ì¦. Item í´ë˜ìŠ¤ì— ì •ì˜ëœ ë‚´ìš©ìœ¼ë¡œ ê²€ì¦ì„ í•¨. @Valid ì–´ë…¸í…Œì´ì…˜ì„ ì ìš©í•˜ì§€ ì•Šìœ¼ë©´ ìœ íš¨ì„± ê²€ì¦ì„ í•˜ì§€ ì•ŠìŒ.
+		ModelAndView mav = new ModelAndView("item/add"); 
 		if(bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
-		service.itemCreate(item,request);
+		service.itemCreate(item,request); //upload ìœ„ì¹˜ë•Œë¬¸ì— request ê°€ì ¸ì˜´
 		mav.setViewName("redirect:/item/list.shop");
 		return mav;
 	}
+	
 	@RequestMapping("item/update")
 	public ModelAndView update(@Valid Item item, BindingResult bindResult, HttpServletRequest request) {
-		ModelAndView mav = new ModelAndView("item/edit");
+		ModelAndView mav = new ModelAndView("item/edit"); 
 		if(bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
-		service.itemUpdate(item,request);
+		service.itemEdit(item,request); 
 		mav.setViewName("redirect:/item/list.shop");
 		return mav;
 	}
+	
 	@RequestMapping("item/delete")
-	public ModelAndView delete(String id) {
-		ModelAndView mav = new ModelAndView("item/confirm");
-		service.itemDelete(id);
+	public ModelAndView delete(Integer id) {
+		ModelAndView mav = new ModelAndView(); 
+		service.itemDelete(id); 
 		mav.setViewName("redirect:/item/list.shop");
 		return mav;
 	}

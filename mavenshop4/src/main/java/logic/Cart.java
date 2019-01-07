@@ -6,34 +6,46 @@ import java.util.List;
 import javax.servlet.http.HttpSession;
 
 public class Cart {
-	//itemList : ÇöÀç Àå¹Ù±¸´Ï¿¡ µî·ÏµÈ »óÇ°¸ñ·Ï
-	private List<ItemSet> itemSetList = new ArrayList<ItemSet>(); //»óÇ°¸ñ·Ï
-	
+	private List<ItemSet> itemSetList = new ArrayList<ItemSet>(); // ìƒí’ˆ ëª©ë¡
+
 	public List<ItemSet> getItemSetList() {
-		return itemSetList;
+		return itemSetList; //í˜„ì¬ ì¥ë°”êµ¬ë‹ˆì— ë“±ë¡ëœ ëª©ë¡
 	}
-	//itemSet : Àå¹Ù±¸´Ï¿¡ µî·ÏµÉ »óÇ°
-	public void push(ItemSet itemSet) {
-		for(ItemSet s : itemSetList) {
-			if(s.getItem().getId() == itemSet.getItem().getId()) { //Ãß°¡ »óÇ° µî·Ï
-				s.setQuantity(s.getQuantity() + itemSet.getQuantity());
+
+	public void push(ItemSet itemSet) { //ì¥ë°”êµ¬ë‹ˆì— ë„£ì„ ëª©ë¡
+		for (ItemSet is : itemSetList) {
+			if (is.getItem().getId() == itemSet.getItem().getId()) { //ì¶”ê°€ ê°œìˆ˜ ì¦ê°€ ë“±ë¡
+				is.setQuantity(is.getQuantity() + itemSet.getQuantity());
 				return;
 			}
 		}
 		itemSetList.add(itemSet);
 	}
+
+	public void deleteitem(ItemSet itemSet) {
+		itemSetList.remove(itemSet);
+	}
+
 	public boolean isEmpty() {
-		return itemSetList == null || itemSetList.size() == 0;
+		
+		return itemSetList == null || itemSetList.size()==0;
 	}
-	public int getTotalAmount(){
-		int total = 0;
-		for(ItemSet s : itemSetList) {
-			total += s.getItem().getPrice() * s.getQuantity();
+
+	public void setItemSetList(List<ItemSet> itemSetList) {
+		this.itemSetList = itemSetList;
+	}
+	
+	
+	public int getTotalAmount() {
+		int sum = 0;
+		for(ItemSet is : itemSetList) {
+			sum = sum + (is.getQuantity()*is.getItem().getPrice());
 		}
-		return total;
+		return sum;
 	}
+
 	public void clearAll(HttpSession session) {
 		itemSetList = new ArrayList<ItemSet>();
-		session.setAttribute("CART",this);
+		session.setAttribute("CART", this);
 	}
 }

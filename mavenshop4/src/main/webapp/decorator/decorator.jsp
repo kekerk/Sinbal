@@ -12,6 +12,31 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 
+
+<script>
+// Script for side navigation
+function w3_open() {
+  var x = document.getElementById("mySidebar");
+  x.style.width = "300px";
+  x.style.paddingTop = "10%";
+  x.style.display = "block";
+}
+
+// Close side navigation
+function w3_close() {
+  document.getElementById("mySidebar").style.display = "none";
+}
+
+// Used to toggle the menu on smaller screens when clicking on the menu button
+function openNav() {
+  var x = document.getElementById("navDemo");
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+  } else { 
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
 <body id="myPage">
 
 <!-- Sidebar on click -->
@@ -25,12 +50,15 @@
   <a href="#" class="w3-bar-item w3-button">Link 4</a>
   <a href="#" class="w3-bar-item w3-button">Link 5</a>
 </nav>
-
+<!-- Image Header -->
+<div class="w3-display-container w3-animate-opacity">
+  <img src="${path}/picture/main.png" alt="boat" style="width:100%;min-height:350px;max-height:600px;">
+</div>
 <!-- Navbar -->
-<div class="w3-top">
+<div class="w3-middle">
  <div class="w3-bar w3-theme-d2 w3-left-align">
   <a class="w3-bar-item w3-button w3-hide-medium w3-hide-large w3-right w3-hover-white w3-theme-d2" href="javascript:void(0);" onclick="openNav()"><i class="fa fa-bars"></i></a>
-  <a href="#" class="w3-bar-item w3-button w3-teal"><i class="fa fa-home w3-margin-right"></i>Home</a>
+  <a href="${path}" class="w3-bar-item w3-button w3-teal"><i class="fa fa-home w3-margin-right"></i>Home</a>
      <div class="w3-dropdown-hover w3-hide-small">
     <button class="w3-button" title="Notifications">운동화<i class="fa fa-caret-down"></i></button>     
     <div class="w3-dropdown-content w3-bar-block w3-animate-zoom">
@@ -103,113 +131,42 @@
   </div>
 </div>
 
-<!-- Image Header -->
-<div class="w3-display-container w3-animate-opacity">
-  <img src="${path}/picture/main.png" alt="boat" style="width:100%;min-height:350px;max-height:600px;">
-</div>
 
 <!-- Modal -->
 <div id="id01" class="w3-modal">
   <div class="w3-modal-content w3-card-4 w3-animate-top">
     <header class="w3-container w3-teal w3-display-container"> 
       <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-teal w3-display-topright"><i class="fa fa-remove"></i></span>
-      <h4>로그인</h4>
+   <h4>로그인</h4>
     </header>
-    <div class="w3-container">
-      <p>Cool huh? Ok, enough teasing around..</p>
-      <p>Go to our <a class="w3-text-teal" href="/w3css/default.asp">W3.CSS Tutorial</a> to learn more!</p>
     </div>
-    <footer class="w3-container w3-teal">
-      <p>Modal footer</p>
-    </footer>
-  </div>
+      <form:form modelAttribute="user" methos="post" action="login.shop">
+	<input type="hidden" name="userName" value="유효성 검증을 회피하기 위한 의미없는 이름">
+	<spring:hasBindErrors name="user">
+		<font color="red">
+			<c:forEach items="${errors.globalErrors}" var="error">
+				<spring:message code="${error.code}" />
+			</c:forEach>
+		</font>
+	</spring:hasBindErrors>
+	<h2 class="w3-center"><font color="white">로그인</font></h2>
+	<table class="w3-padding w3-display-middle">
+		<tr height="40px"><td style="color:white;">아이디</td><td><form:input path="userId"/>&nbsp;
+			<font color="red"><form:errors path="userId" /></font></td></tr>
+		<tr height="40px"><td style="color:white;">비밀번호</td><td><form:password path="password"/>&nbsp;
+			<font color="red"><form:errors path="password" /></font></td></tr>
+		<tr height="40px"><td colspan="2" align="center">
+			<input type="submit" class="w3-button w3-left w3-theme" value="로그인">&nbsp;
+			<input type="button" class="w3-button w3-right w3-theme" value="회원가입" onclick="location.href='userEntry.shop'"></td></tr>
+	</table>
+</form:form>
 </div>
 
 <!-- Team Container -->
 <div class="w3-container w3-padding-64 w3-center" id="team">
-<h2>신발팜</h2>
-<p>신발을 팔아보자</p>
-
-<div class="w3-row"><br>
-
-<div class="w3-quarter">
-  <img src="${path}/picture/air.PNG" alt="Boss" style="width:45%" class="w3-circle w3-hover-opacity">
-  <h3>에어포스</h3>
-  <p>&#8361;140,000</p>
+<decorator:body/>
 </div>
 
-<div class="w3-quarter">
-  <img src="${path}/picture/roafer.jpg" alt="Boss" style="width:45%" class="w3-circle w3-hover-opacity">
-  <h3>닥터마틴 옥스포드</h3>
-  <p>&#8361;180,000</p>
-</div>
-
-<div class="w3-quarter">
-  <img src="${path}/picture/walker.jpg" alt="Boss" style="width:45%" class="w3-circle w3-hover-opacity">
-  <h3>레드윙 워커</h3>
-  <p>&#8361;380,000</p>
-</div>
-
-<div class="w3-quarter">
-  <img src="${path}/picture/sandle.jpg" alt="Boss" style="width:45%" class="w3-circle w3-hover-opacity">
-  <h3>츄바스코 아즈텍</h3>
-  <p> &#8361;99,000</p>
-</div>
-
-</div>
-</div>
-
-<!-- Work Row -->
-<div class="w3-row-padding w3-padding-64 w3-theme-l1" id="work">
-
-<div class="w3-quarter">
-<h2>Our Work</h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-</div>
-
-<div class="w3-quarter">
-<div class="w3-card w3-white">
-  <img src="/w3images/snow.jpg" alt="Snow" style="width:100%">
-  <div class="w3-container">
-  <h3>Customer 1</h3>
-  <h4>Trade</h4>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  </div>
-  </div>
-</div>
-
-<div class="w3-quarter">
-<div class="w3-card w3-white">
-  <img src="/w3images/lights.jpg" alt="Lights" style="width:100%">
-  <div class="w3-container">
-  <h3>Customer 2</h3>
-  <h4>Trade</h4>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  </div>
-  </div>
-</div>
-
-<div class="w3-quarter">
-<div class="w3-card w3-white">
-  <img src="/w3images/mountains.jpg" alt="Mountains" style="width:100%">
-  <div class="w3-container">
-  <h3>Customer 3</h3>
-  <h4>Trade</h4>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  <p>Blablabla</p>
-  </div>
-  </div>
-</div>
-
-</div>
 
 <!-- Container -->
 <div class="w3-container" style="position:relative">
@@ -254,31 +211,6 @@
     <i class="fa fa-chevron-circle-up"></i></span></a>
   </div>
 </footer>
-
-<script>
-// Script for side navigation
-function w3_open() {
-  var x = document.getElementById("mySidebar");
-  x.style.width = "300px";
-  x.style.paddingTop = "10%";
-  x.style.display = "block";
-}
-
-// Close side navigation
-function w3_close() {
-  document.getElementById("mySidebar").style.display = "none";
-}
-
-// Used to toggle the menu on smaller screens when clicking on the menu button
-function openNav() {
-  var x = document.getElementById("navDemo");
-  if (x.className.indexOf("w3-show") == -1) {
-    x.className += " w3-show";
-  } else { 
-    x.className = x.className.replace(" w3-show", "");
-  }
-}
-</script>
 
 </body>
 </html>

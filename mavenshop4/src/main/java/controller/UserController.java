@@ -11,7 +11,6 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
@@ -20,193 +19,204 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
-
 import exception.LoginException;
+import logic.Item;
 import logic.Sale;
 import logic.SaleItem;
 import logic.ShopService;
 import logic.User;
 import util.CiperUtil;
-
+/*
+ * 1. íšŒì› ê°€ì…/ìˆ˜ì • ì‹œ ì´ë©”ì¼ì„ ì•”í˜¸í™”í•˜ì—¬ dbì— ì €ì¥í•˜ê¸°
+ * 2. ì¡°íšŒ ì‹œ ë³µí˜¸í™” í•˜ì—¬ í™”ë©´ì— ì¶œë ¥
+ * 	  íšŒì› ì¡°íšŒ, adminì˜ íšŒì› ëª©ë¡ ì¡°íšŒ
+ */
 @Controller
 public class UserController {
+
 	@Autowired
 	ShopService service;
-	
-	@RequestMapping("user/userForm") 
+
+	@RequestMapping("user/userForm")
 	public ModelAndView userForm() {
 		ModelAndView mav = new ModelAndView();
 		mav.addObject(new User());
 		return mav;
 	}
-	@RequestMapping("user/userEntry") 
-	public ModelAndView userEntry(@Valid User user,BindingResult bindResult) {
-		ModelAndView mav = new ModelAndView("user/userForm");
-		if(bindResult.hasErrors()) {
-			mav.getModel().putAll(bindResult.getModel());
-			return mav;
-		}
-		try {
-			user.setPassword(service.getHashvlaue(user.getPassword()));
-			service.userCreate(user);
-			mav.setViewName("user/login");
-			mav.addObject("user",user);
-		} catch(DataIntegrityViolationException e) {
-			bindResult.reject("error.duplicate.user");
-		}
+	
+	@RequestMapping("user/main")
+	public ModelAndView mainForm() {
+		ModelAndView mav = new ModelAndView();
+		mav.addObject(new User());
 		return mav;
 	}
-	@RequestMapping("user/loginForm") 
+	
+	@RequestMapping("user/loginForm")
 	public ModelAndView loginForm() {
 		ModelAndView mav = new ModelAndView("user/login");
 		mav.addObject(new User());
 		return mav;
 	}
+
 	@RequestMapping("user/login")
-	public ModelAndView loginForm(@Valid User user,BindingResult bindResult, HttpSession session) {
+	public ModelAndView login(@Valid User user, BindingResult bindResult, HttpSession session) {
 		ModelAndView mav = new ModelAndView();
-		if(bindResult.hasErrors()) {
+		if (bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
-		//db¿¡¼­ ¾ÆÀÌµğÀÇ È¸¿ø Á¤º¸ Á¶È¸ÇÏ°í ºñ¹Ğ¹øÈ£ °ËÁõÇÏ¿© session¿¡ µî·Ï
-		//·Î±×ÀÎ ¼º°ø½Ã loginSuccess
 		try {
-			//u : ¾ÆÀÌµğ¿¡ ÇØ´çÇÏ´Â dbÀÇ »ç¿ëÀÚ Á¤º¸ ÀúÀå
-			User u = service.selectUser(user.getUserId());
-			if(u == null){
+			User selectedUser = service.selectUser(user.getUserId());
+			if(selectedUser == null) {
 				bindResult.reject("error.login.id");
 				mav.getModel().putAll(bindResult.getModel());
 				return mav;
 			}
-			
-			if(service.getHashvlaue(user.getPassword()).equals(u.getPassword())) { //¾ÆÀÌµğ¿Í ºñ¹Ğ¹øÈ£°¡ ÀÏÄ¡
-				session.setAttribute("loginUser", u); //·Î±×ÀÎ ¼º°ø.
+			if (service.getHashValue(user.getPassword()).equals(selectedUser.getPassword())) {
+				session.setAttribute("loginUser", selectedUser);
+				mav.setViewName("/user/loginSuccess");
 			} else {
 				bindResult.reject("error.login.password");
 				mav.getModel().putAll(bindResult.getModel());
 				return mav;
 			}
-		} catch(Exception e) { 
-			//EmptyResultDataAccessException :ÇØ´ç ¾ÆÀÌµğ Á¤º¸°¡ db¿¡ ¾øÀ» ¶§. ½ºÇÁ¸µ¿¡¼­¸¸ ¹ß»ıµÇ´Â ¿¹¿Ü.
+		} catch (Exception e) {
 			e.printStackTrace();
-			bindResult.reject("error.user.login");
+			bindResult.reject("error.login.id");
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
-		mav.setViewName("user/loginSuccess"); //·Î±×ÀÎ ¼º°øÇÏ´Â °æ¿ì¸¸ ¼³Á¤
 		return mav;
 	}
-	@RequestMapping("user/logout")
-	public ModelAndView logout(HttpSession session) {
-		ModelAndView mav = new ModelAndView();
-		session.invalidate();
-		mav.setViewName("redirect:loginForm.shop"); 
-		return mav;
-	}
-	@RequestMapping("user/mypage")
-	public ModelAndView mypage(String id, HttpSession session) {
-		User user = service.selectUser(id);
-		List<Sale> salelist = service.saleList(id);
-		for(Sale s : salelist) {
-			s.setItemList(service.saleItemList(s.getSaleId()));
-			int total = 0;
-			for(SaleItem si : s.getItemList()) {
-				total += si.getQuantity() * si.getItem().getPrice();
-			}
-			s.setTotAmount(total);
-		}
-		ModelAndView mav = new ModelAndView();
-		mav.addObject("user",user);
-		mav.addObject("salelist", salelist);
-		return mav;
-	}
-	@RequestMapping("user/updateForm")
-	public ModelAndView updateForm(String id, HttpSession session) {
-		ModelAndView mav = new ModelAndView();
-		User user = service.selectUser(id);
-		user.setEmail(CiperUtil.decrypt(user.getEmail(), user.getUserId()));
-		mav.addObject("user",user);
-		return mav;
-	}
-	/*
-	 * 1. ÆÄ¶ó¹ÌÅÍ °ªµéÀ» User °´Ã¼¿¡ ÀúÀå, À¯È¿¼º °ËÁõ
-	 * 2. AOP¸¦ ÀÌ¿ëÇÏ¿© ·Î±×ÀÎ ¾ÈµÈ °æ¿ì, ´Ù¸¥ »ç¿ëÀÚ Á¤º¸ ¼öÁ¤ ¾ÈµÇµµ·Ï LoginAspect Å¬·¡½º¿¡ AOP¸Ş¼­µå Ãß°¡
-	 * 3. ºñ¹Ğ¹øÈ£°¡ ÀÏÄ¡ÇÏ´Â °æ¿ì¸¸ È¸¿øÁ¤º¸ ¼öÁ¤
-	 * 4. È¸¿øÁ¤º¸ ¼öÁ¤ ¼º°ø : mypage.shop ÆäÀÌÁö ÀÌµ¿
-	 *          ¼öÁ¤ ½ÇÆĞ : updateForm.shop ÆäÀÌÁö ÀÌµ¿
-	 */
-	@RequestMapping("user/update")
-	public ModelAndView update(HttpSession session, @Valid User user,BindingResult bindResult) {
-		ModelAndView mav = new ModelAndView("user/updateForm");
-		if(bindResult.hasErrors()) {
+
+	@RequestMapping("user/userEntry")
+	public ModelAndView userEntry(@Valid User user, BindingResult bindResult) {
+		ModelAndView mav = new ModelAndView("user/userForm");
+		if (bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
 		try {
-			User u = service.selectUser(user.getUserId());
-			if(service.getHashvlaue(user.getPassword()).equals(u.getPassword())) {
-				user.setEmail(CiperUtil.encrypt(user.getEmail(), user.getUserId()));
-				service.update(user);
-			} else {
-				bindResult.reject("error.login.password");
-				mav.getModel().putAll(bindResult.getModel());
-				return mav;
+			service.userCreate(user);
+			mav.setViewName("user/login");
+			mav.addObject("user", user);
+		} catch (DataIntegrityViolationException e) {
+			bindResult.reject("error.duplicate.user");
+		}
+		return mav;
+	}
+
+	@RequestMapping("user/logout")
+	public ModelAndView logout(HttpSession session) {
+		ModelAndView mav = new ModelAndView();
+		session.invalidate();
+		mav.setViewName("redirect:loginForm.shop");
+		return mav;
+	}
+
+	@RequestMapping("user/mypage")
+	public ModelAndView mypage(String id, HttpSession session) {
+		ModelAndView mav = new ModelAndView();
+		User user = service.selectUser(id);
+		// sale í…Œì´ë¸”ì—ì„œ í•´ë‹¹ ì‚¬ìš©ìê°€ ì£¼ë¬¸í•œ ì •ë³´ ëª©ë¡ ì¡°íšŒ
+		List<Sale> salelist = service.SaleList(id);
+		for (Sale s : salelist) {
+			// ì£¼ë¬¸ ë²ˆí˜¸ë¥¼ í†µí•´ í•´ë‹¹ ì£¼ë¬¸ì— í¬í•¨ëœ ë¬¼í’ˆëª©ë¡ list ê°ì²´ë¡œ ìƒì„±
+			List<SaleItem> saleItemlist = service.SaleItemlist(s.getSaleId());
+			for (SaleItem si : saleItemlist) {
+				Item item = service.getItem(si.getItemId());
+				si.setItem(item);
 			}
-		} catch(EmptyResultDataAccessException e) { 
-			bindResult.reject("error.user.update");
+			s.setItemList(saleItemlist);
+		}
+		mav.addObject("user", user);
+		mav.addObject("salelist", salelist);
+		return mav;
+	}
+
+	@RequestMapping("user/updateForm")
+	public ModelAndView updateForm(String id, HttpSession session) {
+		ModelAndView mav = new ModelAndView();
+		User user = service.selectUser(id);
+		mav.addObject("user", user);
+		return mav;
+	}
+
+	/*
+	 * íŒŒë¼ë¯¸í„° ê°’ë“¤ì„ user ê°ì²´ì— ì €ì¥ ë¹„ë°€ë²ˆí˜¸ê°€ ì¼ì¹˜í•˜ëŠ” ê²½ìš°ë§Œ íšŒì›ì •ë³´ ìˆ˜ì • ìˆ˜ì • ì„±ê³µ :mypage.shop ìˆ˜ì • ì‹¤íŒ¨
+	 * :updateForm.shop
+	 */
+	@RequestMapping("user/update")
+	public ModelAndView update(@Valid User user, BindingResult bindResult, HttpSession session) {
+		ModelAndView mav = new ModelAndView("user/updateForm");
+		if (bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
-		mav.setViewName("redirect:/user/mypage.shop?id="+user.getUserId());
-		return mav;
-	}
-	@RequestMapping(value="user/delete",method=RequestMethod.GET)
-	public ModelAndView deleteForm(String id, HttpSession session) {
-		ModelAndView mav = new ModelAndView();
-		User user = service.selectUser(id);
-		mav.addObject("user",user);
-		return mav;
-	}		
-	/*
-	 * -°ü¸®ÀÚ°¡ ´Ù¸¥ È¸¿øÀ» °­Á¦ Å»Åğ
-	 * ºñ¹Ğ¹øÈ£¿¡ °ü¸®ÀÚ ºñ¹Ğ¹øÈ£ ÀÔ·ÂÇÏ±â
-	 * °ü¸®ÀÚ ºñ¹Ğ¹øÈ£°¡ ¸Â´Â °æ¿ì È¸¿ø Á¤º¸ »èÁ¦
-	 * °­Á¦ Å»Åğ ¼º°ø : admin/list.shopÆäÀÌÁö ÀÌµ¿
-	 *       ½ÇÆĞ : À¯È¿¼º °ËÁõÀ¸·Î delete.jsp ÆäÀÌÁö Ãâ·Â
-	 * -º»ÀÎ È¸¿ø Å»Åğ
-	 * ºñ¹Ğ¹øÈ£¿¡ È¸¿ø ºñ¹Ğ¹øÈ£ ÀÔ·ÂÇÏ±â
-	 * ºñ¹Ğ¹øÈ£°¡ ¸Â´Â °æ¿ì È¸¿ø Á¤º¸ »èÁ¦
-	 * Å»Åğ ¼º°ø : session Á¾·á ÈÄ loginForm.shopÆäÀÌÁö ÀÌµ¿
-	 *    ½ÇÆĞ : À¯È¿¼º °ËÁõÀ¸·Î delete.jspÆäÀÌÁö¿¡ Ãâ·Â
-	 */
-	@RequestMapping(value="user/delete",method=RequestMethod.POST)
-	public ModelAndView delete(String id, HttpSession session, String password) {
-		ModelAndView mav = new ModelAndView();
-		User u = (User)session.getAttribute("loginUser");
-		if(u.getUserId().equals("admin")) {
-			if(u.getPassword().equals(service.getHashvlaue(password))) {
-				service.delete(id);
-				session.invalidate();
-				mav.setViewName("redirect:../admin/list.shop");
-			} else {
-				throw new LoginException("¿À·ù","../user/delete.shop?id="+id);
+		User dbuser = service.selectUser(user.getUserId());
+		if (service.getHashValue(user.getPassword()).equals(dbuser.getPassword())) {
+			try {
+				service.update(user);
+				mav.setViewName("redirect:../user/mypage.shop?id=" + user.getUserId());
+			} catch (Exception e) {
+				e.printStackTrace();
+				bindResult.reject("error.user.update");
+				mav.getModel().putAll(bindResult.getModel());
 			}
 		} else {
-			if(u.getPassword().equals(service.getHashvlaue(password))) {
-				service.delete(id);
-				session.invalidate();
-				mav.setViewName("redirect:loginForm.shop");
-			} else {
-				throw new LoginException("¿À·ù","../user/delete.shop?id="+id);
-			}
+			bindResult.reject("error.login.password");
+			mav.getModel().putAll(bindResult.getModel());
 		}
 		return mav;
 	}
-	
-	@InitBinder
+
+/*	 íšŒì› íƒˆí‡´(GET)
+	 adminì¸ ê²½ìš° íƒˆí‡´ë˜ì§€ ì•Šë„ë¡ ì²˜ë¦¬
+	 1.ê´€ë¦¬ìê°€ ë‹¤ë¥¸ íšŒì›ì„ ê°•ì œ íƒˆí‡´
+	 1)ë¹„ë°€ë²ˆí˜¸ì— ê´€ë¦¬ì ë¹„ë°€ë²ˆí˜¸ë¥¼ ì…ë ¥í•˜ê¸°.
+	 2)ê´€ë¦¬ìë¹„ë°€ë²ˆí˜¸ê°€ ë§ëŠ” ê²½ìš° íšŒì› ì •ë³´ ì‚­ì œ.
+	 3)ê°•ì œíƒˆí‡´ ì„±ê³µ : redirect:admin/list.shop ì´ë™
+	 4)ê°•ì œíƒˆí‡´ ì‹¤íŒ¨ : ì˜ˆì™¸ ë°œìƒ í›„ delete.shop í˜ì´ì§€ì— ì¶œë ¥
+	 2.ë³¸ì¸ íšŒì› íƒˆí‡´
+	 1)ë¹„ë°€ë²ˆí˜¸ì— íšŒì› ë¹„ë°€ë²ˆí˜¸ ì…ë ¥í•˜ê¸°
+	 2)ë¹„ë°€ë²ˆí˜¸ê°€ ë§ëŠ” ê²½ìš° íšŒì› ì •ë³´ ì‚­ì œ
+	 íƒˆí‡´ ì„±ê³µ : session ì¢…ë£Œ í›„ loginForm.shop í˜ì´ì§€ ì´ë™
+	 íƒˆí‡´ ì‹¤íŒ¨ : ì˜ˆì™¸ë°œìƒ í›„ delete.jsp í˜ì´ì§€ì— ì¶œë ¥*/
+	@RequestMapping(value = "user/delete", method = RequestMethod.GET)
+	public ModelAndView delete(String id, HttpSession session) {
+		ModelAndView mav = new ModelAndView();
+		User user = service.selectUser(id);
+		mav.addObject("user", user);
+		return mav;
+	}
+
+	// íšŒì›íƒˆí‡´(POST)
+	@RequestMapping(value = "user/delete", method = RequestMethod.POST)
+	public ModelAndView delete(String id, HttpSession session, String password) {
+		ModelAndView mav = new ModelAndView();
+		User loginUser = (User) session.getAttribute("loginUser"); // í˜„ì¬ ë¡œê·¸ì¸ëœ ìœ ì €
+		if (loginUser.getPassword().equals(service.getHashValue(password))) { // íŒ¨ìŠ¤ì›Œë“œ ì¼ì¹˜
+			try {
+				service.deleteUser(id);
+				if (!loginUser.getUserId().equals("admin")) { // ê´€ë¦¬ìê°€ ì•„ë‹Œ ê²½ìš°
+					session.invalidate();
+					mav.setViewName("redirect:loginForm.shop");
+				} else { // ê´€ë¦¬ìì¼ ê²½ìš°
+					mav.setViewName("redirect:../admin/list.shop");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new LoginException("íƒˆí‡´ ì‹¤íŒ¨", "../user/delete.shop?id=" + id);
+			}
+		} else {// íŒ¨ìŠ¤ì›Œë“œ ë¶ˆì¼ì¹˜
+			throw new LoginException("ë¹„ë°€ë²ˆí˜¸ ì˜¤ë¥˜", "../user/delete.shop?id=" + id);
+		}
+		return mav;
+	}
+
+	@InitBinder // ë‚ ì§œí˜•ì‹ ì´ˆê¸° ì§€ì •
 	public void initBinder(WebDataBinder binder) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat,true));
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, true));
 	}
 }

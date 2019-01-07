@@ -18,162 +18,244 @@ import dao.SaleDao;
 import dao.SaleItemDao;
 import dao.UserDao;
 import exception.ShopException;
+import util.CiperUtil;
 
-@Service //@Component + Service ±â´É(Controller¿Í Repository»çÀÌÀÇ Áß°£ °´Ã¼)
+/*
+ * @Service = @Component(ì˜ í•˜ìœ„ í´ë˜ìŠ¤) + Service ê¸°ëŠ¥(Controllerì™€ Repository ì‚¬ì´ì˜ ì¤‘ê°„ ê°ì²´) ë¶€ì—¬.
+ */
+@Service
 public class ShopService {
-	@Autowired
+	@Autowired // ê°ì²´ ì£¼ì…
 	private ItemDao itemDao;
+
 	@Autowired
 	private UserDao userDao;
+
 	@Autowired
 	private SaleDao saleDao;
+
 	@Autowired
 	private SaleItemDao saleItemDao;
+
 	@Autowired
-	private BoardDao boardDao; 
-	
-	public List<Item> getItemList()	{
+	private BoardDao boardDao;
+
+	public List<Item> getItemList() {
 		return itemDao.list();
 	}
-	public Item getItemById(String id) {
+
+	public Item getItem(Integer id) {
 		return itemDao.getItemById(id);
 	}
-	//item Å×ÀÌºí¿¡ ³»¿ë insert ÇÏ±â
-	//item °´Ã¼¿¡ picture ÆÄÀÏÀ» ÆÄÀÏ·Î ÀúÀåÇÏ±â
+
+	/*
+	 * 2ê°€ì§€ ì—­í•  1. itemí…Œì´ë¸”ì— ë‚´ìš© insertí•˜ê¸° 2. item ê°ì²´ì˜ picture íŒŒì¼ì„ íŒŒì¼ë¡œ ì €ì¥í•˜ê¸°
+	 */
 	public void itemCreate(Item item, HttpServletRequest request) {
-		//¾÷·ÎµåµÈ ÀÌ¹ÌÁö ÀÖ´Â °æ¿ì
-		if(item.getPicture() != null && !item.getPicture().isEmpty()) {
-			uploadFileCreate(item.getPicture(), request, "picture");
+		// ì—…ë¡œë“œëœ ì´ë¯¸ì§€ê°€ ìˆëŠ” ê²½ìš°
+		if (item.getPicture() != null && !item.getPicture().isEmpty()) {
+			uploadFileCreate(item.getPicture(), request, "picture"); // pictureì˜ ë‚´ìš©ì„ íŒŒì¼ë¡œ ì €ì¥í•˜ëŠ” ë©”ì„œë“œ
+			// dbì— íŒŒì¼ì˜ ì´ë¦„ì„ ì €ì¥
 			item.setPictureUrl(item.getPicture().getOriginalFilename());
 		}
 		itemDao.insert(item);
 	}
-	private void uploadFileCreate(MultipartFile picture, HttpServletRequest request, String path) {
-		String uploadPath = request.getServletContext().getRealPath("/") + "/"+path+"/";
-		String orgFile = picture.getOriginalFilename();
-		try {
-			//transferTo : ÆÄÀÏÀÇ ³»¿ëÀ» (uploadPath + orgFile)ÀÎ ÆÄÀÏ¿¡ ÀúÀå.
-			picture.transferTo(new File(uploadPath + orgFile));
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	public void itemUpdate(Item item, HttpServletRequest request) {
-		//¼öÁ¤ÇÒ »çÁøÀÌ ¾÷·Îµå µÈ °æ¿ì
-		if(item.getPicture() != null && !item.getPicture().isEmpty()) {
+
+	public void itemEdit(Item item, HttpServletRequest request) {
+
+		if (item.getPicture() != null && !item.getPicture().isEmpty()) {
 			uploadFileCreate(item.getPicture(), request, "picture");
 			item.setPictureUrl(item.getPicture().getOriginalFilename());
 		}
 		itemDao.update(item);
 	}
-	public void itemDelete(String id) {
-		itemDao.delete(id);			
+
+	private void uploadFileCreate(MultipartFile picture, HttpServletRequest request, String path) {
+		String uploadPath = request.getServletContext().getRealPath("/") + "/" + path + "/";
+		String orgFile = picture.getOriginalFilename();// íŒŒì¼ ì´ë¦„
+		try {
+			// transferTo : íŒŒì¼ì˜ ë‚´ìš©ì„ (uploadPath + orgFile)ì¸ íŒŒì¼ì— ì €ì¥.
+			picture.transferTo(new File(uploadPath + orgFile));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void itemDelete(Integer id) {
+		itemDao.delete(id);
 	}
 
 	public void userCreate(User user) {
-		userDao.insert(user);
+		String ciperemail = CiperUtil.encrypt(user.getEmail(), user.getUserId());
+		user.setEmail(ciperemail);
+		user.setPassword(getHashValue(user.getPassword()));
+		userDao.insertUser(user);
+
 	}
+
 	public User selectUser(String userId) {
-		return userDao.select(userId);
+		User user = userDao.selectUser(userId);
+		user.setEmail(CiperUtil.decrypt(user.getEmail(), user.getUserId()));
+		return user;
 	}
+
 	public Sale checkEnd(User loginUser, Cart cart) {
 		Sale sale = new Sale();
-		sale.setSaleId(saleDao.getMaxSaleId()); //ÁÖ¹®¹øÈ£ ÀÚµ¿ »ı¼º
-		sale.setUser(loginUser); //»óÇ° ±¸¸Å °í°´ Á¤º¸
-		sale.setUpdateTime(new Date());
+		sale.setSaleId(saleDao.getMaxSaleId()); // ì£¼ë¬¸ë²ˆí˜¸ ìë™ ìƒì„±
+		sale.setUser(loginUser);// ìƒí’ˆ êµ¬ë§¤ ê³ ê° ì •ë³´
+		sale.setUpdateTime(new Date()); // êµ¬ë§¤ ì¼ì
 		List<ItemSet> itemList = cart.getItemSetList();
-		//CartÀÇ itemSet Á¤º¸¸¦ SaleItem Á¤º¸·Î º¯È¯
+		// cartì˜ itemSet ì •ë³´ë¥¼ saleItem ì •ë³´ë¡œ ë³€í™˜
 		int i = 0;
-		for(ItemSet s : itemList) {
+		for (ItemSet is : itemList) {
 			int saleItemId = ++i;
-			SaleItem saleItem = new SaleItem(sale.getSaleId(),saleItemId,s,sale.getUpdateTime());
+			SaleItem saleItem = new SaleItem(sale.getSaleId(), saleItemId, is, sale.getUpdateTime());
 			sale.getItemList().add(saleItem);
 		}
-		saleDao.insert(sale); //sale Å×ÀÌºí¿¡ ·¹ÄÚµå Ãß°¡
+		saleDao.insert(sale); // sale í…Œì´ë¸”ì— ë ˆì½”ë“œ ì¶”ê°€
 		List<SaleItem> saleItemList = sale.getItemList();
-		for(SaleItem s : saleItemList) {
-			saleItemDao.insert(s); //ÁÖ¹®»óÇ° Á¤º¸¸¦ saleitem Å×ÀÌºí¿¡ Ãß°¡
+		for (SaleItem is : saleItemList) {
+			saleItemDao.insert(is); // ì£¼ë¬¸ìƒí’ˆì •ë³´ë¥¼ saleitem í…Œì´ë¸”ì— ì¶”ê°€
 		}
 		return sale;
 	}
-	public List<Sale> saleList(String id) {
-		return saleDao.list(id);
+
+	public List<Sale> SaleList(String id) {
+		return saleDao.Salelist(id);
 	}
-	public List<SaleItem> saleItemList(Integer saleId) {
-		List<SaleItem> list = saleItemDao.list(saleId);
-		for(SaleItem s : list) {
-			s.setItem(itemDao.getItemById(s.getItemId()));
+
+	public List<SaleItem> SaleItemlist(Integer saleId) {
+		return saleItemDao.SaleItemlist(saleId);
+	}
+
+	public void update(User user) {
+		String ciperemail = CiperUtil.encrypt(user.getEmail(), user.getUserId());
+		user.setEmail(ciperemail);
+		userDao.update(user);
+
+	}
+
+	public void deleteUser(String userId) {
+		userDao.deleteUser(userId);
+
+	}
+
+	public List<User> userList() {
+		List<User> list = userDao.userList();
+		for(User u : list) {
+			u.setEmail(CiperUtil.decrypt(u.getEmail(), u.getUserId()));
 		}
 		return list;
 	}
-	public void update(User user) {
-		userDao.update(user);	
-	}
-	public void delete(String id) {
-		userDao.delete(id);
-	}
-	public List<User> userList() {
-		return userDao.userList();
-	}
+
 	public List<User> userList(String[] idchks) {
-		return userDao.list(idchks);
-	}
-	public Board getBoard(Integer num, HttpServletRequest request) {
-		if(request.getRequestURI().contains("detail")) {
-			boardDao.readcntadd(num);
+		List<User> list =  userDao.userList(idchks);
+		for(User u : list) {
+			u.setEmail(CiperUtil.decrypt(u.getEmail(), u.getUserId()));
 		}
-		return boardDao.select(num);
+		return list;
 	}
+
+	public Board selectBoard(Integer num) {
+		return boardDao.selectBoard(num);
+	}
+
+	public List<Board> boardList(String searchType, String searchContent, Integer pageNum, int limit) {
+		return boardDao.list(searchType, searchContent, pageNum, limit);
+	}
+
 	public int boardcount(String searchType, String searchContent) {
-		return boardDao.count(searchType,searchContent);
+
+		return boardDao.count(searchType, searchContent);
 	}
-	public List<Board> boardlist(String searchType, String searchContent, Integer pageNum, int limit) {
-		return boardDao.list(searchType,searchContent,pageNum,limit);
-	}
-	public void insert(Board board, HttpServletRequest request) {
-		if(board.getFile1() != null && !board.getFile1().isEmpty()) {
+
+	public void write(Board board, HttpServletRequest request) { // ê¸€ì“°ê¸°ì™€ ë‹µê¸€ ê¸°ëŠ¥ ë™ì‹œ ì‚¬ìš©
+		int num = boardDao.maxNum();
+		int ref = board.getRef();
+		int reflevel = board.getReflevel();
+		int refstep = board.getRefstep();
+		board.setNum(++num);
+		if (request.getRequestURI().contains("write")) { // ê¸€ì“°ê¸°(write)
+			board.setRef(num);
+		}
+		if (request.getRequestURI().contains("reply")) { // ë‹µê¸€(reply)
+			boardDao.updateAboutRef(ref, refstep);
+			board.setRef(ref);
+			board.setReflevel(++reflevel);
+			board.setRefstep(++refstep);
+		}
+		if (board.getFile1() != null && !board.getFile1().isEmpty()) {
 			uploadFileCreate(board.getFile1(), request, "file");
 			board.setFileurl(board.getFile1().getOriginalFilename());
 		}
-		int max = boardDao.maxNum();
-		board.setNum(++max);		
-		board.setRef(max);
-		boardDao.insert(board);
+		boardDao.write(board);
+
 	}
-	public void replyAdd(Board board) {
-		Board b = boardDao.select(board.getNum());
-		int max = boardDao.maxNum();
-		board.setNum(++max);
-		board.setRef(b.getRef());
-		board.setReflevel(b.getReflevel()+1);
-		board.setRefstep(b.getRefstep()+1);
-		boardDao.updateRefstep(b.getRef(), b.getRefstep());
-		boardDao.insert(board);	
+
+//writeì—ì„œ reply ë¶„ë¦¬í•´ì„œ ì‚¬ìš© ì‹œ
+	public void reply(Board board, HttpServletRequest request) {
+		int num = boardDao.maxNum();
+		int ref = board.getRef();
+		int reflevel = board.getReflevel();
+		int refstep = board.getRefstep();
+		boardDao.updateAboutRef(ref, refstep);
+		board.setNum(++num);
+		board.setRef(ref);
+		board.setReflevel(++reflevel);
+		board.setRefstep(++refstep);
+		boardDao.write(board);
 	}
-	public void boardupdate(Board board, HttpServletRequest request) {
-		if(board.getFile1() != null && !board.getFile1().isEmpty()) {
+
+//	public void replys(Board board, HttpServletRequest request) {
+//		Board b1 = boardDao.selectBoard(board.getNum());
+//		int num = boardDao.maxNum();
+//		int ref=board.getRef();
+//		int reflevel = board.getReflevel();
+//		int refstep = board.getRefstep();
+//		boardDao.updateAboutRef(ref,refstep);
+//		board.setNum(++num);
+//		board.setRef(ref);
+//		board.setReflevel(++reflevel);
+//		board.setRefstep(++refstep);
+//		boardDao.write(board);
+//	}
+	public int maxNum() {
+		return boardDao.maxNum();
+	}
+
+	public void reatCnt(int num) {
+		boardDao.readcnt(num);
+	}
+
+	public void updateboard(Board board, HttpServletRequest request) {
+		if (board.getFile1() != null && !board.getFile1().isEmpty()) {
 			uploadFileCreate(board.getFile1(), request, "file");
 			board.setFileurl(board.getFile1().getOriginalFilename());
 		}
-		boardDao.update(board);	
+		boardDao.updateboard(board);
+		
 	}
-	public void boarddelete(Board board) {
-		boardDao.delete(board.getNum());
+
+	public void deleteboard(Integer num) {
+		boardDao.deleteBoard(num);
+		
 	}
-	public String getHashvlaue(String password) {
+
+	public String getHashValue(String password){
 		MessageDigest md;
-		String hashvalue = "";
+		String hashvalue="";
 		try {
 			md = MessageDigest.getInstance("SHA-256");
-			byte[] plain = password.getBytes();
-			byte[] hash = md.digest(plain);
+			byte[] plain=password.getBytes();
+			byte[] hash=md.digest(plain);
 			for(byte b : hash) {
-				hashvalue += String.format("%02X", b);
+				hashvalue+=String.format("%02x", b);
 			}
 		}catch(NoSuchAlgorithmException e) {
 			e.printStackTrace();
-			throw new ShopException("Àü»êºÎ¿¡ ÀüÈ­ ¿ä¸Á","../login.shop");
+			throw new ShopException("ì „ì‚°ë¶€ì— ì „í™” ìš”ë§","../login.shop");
 		}
 		return hashvalue;
 	}
+
 }

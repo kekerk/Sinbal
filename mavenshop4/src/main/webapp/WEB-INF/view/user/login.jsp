@@ -10,9 +10,6 @@
 <title>로그인 화면</title>
 </head>
 <body>
-<%--/mavenshop3/user/loginForm.shop 요청시 login.jsp가 화면에 출력하기
-	/mavenshop3/user/login.shop 요청시 login.jsp에 유효성 검증 화면 출력		 
---%>
 <form:form modelAttribute="user" methos="post" action="login.shop">
 	<input type="hidden" name="userName" value="유효성 검증을 회피하기 위한 의미없는 이름">
 	<spring:hasBindErrors name="user">

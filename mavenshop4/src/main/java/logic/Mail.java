@@ -9,7 +9,8 @@ public class Mail {
 	private String title;
 	private String mtype;
 	private String contents;
-	private List<MultipartFile> file1;
+	private List<MultipartFile> file1; //첨부파일이 2개 이상 존재
+	
 	private String naverid;
 	private String naverpw;
 	public String getRecipient() {
@@ -59,5 +60,7 @@ public class Mail {
 		return "Mail [recipient=" + recipient + ", title=" + title + ", mtype=" + mtype + ", contents=" + contents
 				+ ", file1=" + file1 + ", naverid=" + naverid + ", naverpw=" + naverpw + "]";
 	}
+	
+	
 	
 }
