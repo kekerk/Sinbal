@@ -41,17 +41,17 @@
                         extraAddr = ' (' + extraAddr + ')';
                     }
                     // 조합된 참고항목을 해당 필드에 넣는다.
-                    document.getElementById("sample6_extraAddress").value = extraAddr;
+                    document.getElementById("extraAddress").value = extraAddr;
                 
                 } else {
-                    document.getElementById("sample6_extraAddress").value = '';
+                    document.getElementById("extraAddress").value = '';
                 }
 
                 // 우편번호와 주소 정보를 해당 필드에 넣는다.
                 document.getElementById('postcode').value = data.zonecode;
                 document.getElementById("address").value = addr;
                 // 커서를 상세주소 필드로 이동한다.
-                document.getElementById("sample6_detailAddress").focus();
+                document.getElementById("detailAddress").focus();
             }
         }).open();
     }
@@ -77,8 +77,8 @@
 		<input type="text" id="postcode" name="postcode" placeholder="우편번호">
 		<input type="button" onclick="Post_find()" value="우편번호 찾기"><br>
 		<input type="text" id="address" name="address" placeholder="주소"><br>
-		<input type="text" id="sample6_detailAddress" name="address1"placeholder="상세주소">
-		<input type="text" id="sample6_extraAddress" placeholder="참고항목"></td></tr>
+		<input type="text" id="detailAddress" name="address1"placeholder="상세주소">
+		<input type="text" id="extraAddress" placeholder="참고항목"></td></tr>
 		<tr height="40px"><td>이메일</td><td><form:input path="email"/>&nbsp;<font color="red"><form:errors path="email" /></font></td></tr>
 		<tr height="40px"><td>생년월일</td><td><form:input path="birthDay"/>&nbsp;<font color="red"><form:errors path="birthDay" /></font></td></tr>
 		<tr height="40px"><td colspan="2" align="center">

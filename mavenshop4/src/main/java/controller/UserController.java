@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
@@ -13,13 +14,14 @@ import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
-
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import exception.LoginException;
 import logic.Sale;
@@ -40,13 +42,16 @@ public class UserController {
 		return mav;
 	}
 	@RequestMapping("user/userEntry") 
-	public ModelAndView userEntry(@Valid User user,BindingResult bindResult) {
+	public ModelAndView userEntry(@Valid User user,BindingResult bindResult) throws Exception {
 		ModelAndView mav = new ModelAndView("user/userForm");
 		if(bindResult.hasErrors()) {
 			mav.getModel().putAll(bindResult.getModel());
 			return mav;
 		}
 		try {
+			if(user.getAddress1() != "") {
+				user.setAddress(user.getAddress()+" "+user.getAddress1());
+			}
 			user.setPassword(service.getHashvlaue(user.getPassword()));
 			service.userCreate(user);
 			mav.setViewName("user/login");
@@ -56,6 +61,15 @@ public class UserController {
 		}
 		return mav;
 	}
+	@RequestMapping("user/emailConfirm")
+	public ModelAndView emailConfirm(User user,HttpServletRequest request) { // 이메일인증
+		ModelAndView mav = new ModelAndView("user/login");
+		String key =request.getParameter("authKey");
+		String email=service.Email(key);
+		service.updateAuth(email);
+		mav.addObject("user",user);
+		return mav;
+    }
 	@RequestMapping("user/loginForm") 
 	public ModelAndView loginForm() {
 		ModelAndView mav = new ModelAndView("user/login");
@@ -203,7 +217,18 @@ public class UserController {
 		}
 		return mav;
 	}
-	
+	@RequestMapping(value="user/idfind",method=RequestMethod.POST)
+	public ModelAndView idfind(User user, HttpServletRequest request) {
+		String email = request.getParameter("email");
+		ModelAndView mav = new ModelAndView();
+		String id = service.findId(email);
+		mav.addObject("id",id);
+		if(id==null) {
+			throw new LoginException("입력 정보가 잘못되었습니다.","../user/loginForm.shop");
+		} else {
+			throw new LoginException("아이디는 "+id+"입니다.","../user/loginForm.shop");
+		}
+	}
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");

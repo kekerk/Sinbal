@@ -51,4 +51,32 @@ public class UserDao {
 		map.put("ids", idchks);
 		return sqlSession.selectList(NS + "select",map);
 	}
+	
+	public void createAuthKey(String userEmail, String AuthKey) throws Exception {
+		Map<String, Object> map = new HashMap<String,Object>();
+	        map.put("authKey",AuthKey);
+	        map.put("userEmail",userEmail);
+	        sqlSession.getMapper(UserMapper.class).Keyinsert(map);
+    }
+	public void userAuth(String email) {
+		sqlSession.getMapper(UserMapper.class).userAuth(email);
+	}
+	public String userEmail(String key) {
+		return sqlSession.getMapper(UserMapper.class).userEmail(key);
+	}
+	public String findId(String email) {
+		return sqlSession.getMapper(UserMapper.class).findId(email);
+	}
+	public void updatePass(String pass, String email) {
+		Map<String, String> map = new HashMap<String,String>();
+        map.put("pass",pass);
+        map.put("email",email);
+		sqlSession.getMapper(UserMapper.class).updatePass(map);
+	}
+	public String findEmail(User user) {
+		return sqlSession.getMapper(UserMapper.class).findEmail(user);
+	}
+	public void delkey(String authKey) {
+		sqlSession.getMapper(UserMapper.class).deleteKey(authKey);
+	}
 }

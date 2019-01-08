@@ -1,5 +1,7 @@
 <html>
 <body>
-<h2>Hello World!</h2>
+<script>
+	location.href="user/main.shop";
+</script>
 </body>
 </html>

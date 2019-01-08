@@ -18,7 +18,15 @@ public class User {
 	private String phoneNo;
 	private String postcode;
 	private String address;
+	private String address1;
 	private String email;
+	private Integer userauth;
+	public Integer getUserauth() {
+		return userauth;
+	}
+	public void setUserauth(Integer userauth) {
+		this.userauth = userauth;
+	}
 	@Past(message="생일은 과거 날짜만 가능합니다.")
 	private Date birthDay;
 	public String getUserId() {
@@ -56,6 +64,12 @@ public class User {
 	}
 	public void setAddress(String address) {
 		this.address = address;
+	}
+	public String getAddress1() {
+		return address1;
+	}
+	public void setAddress1(String address1) {
+		this.address1 = address1;
 	}
 	public String getEmail() {
 		return email;
