@@ -35,9 +35,15 @@ public class UserController {
 	@Autowired
 	ShopService service;
 	
+	@RequestMapping("user/main") 
+	public ModelAndView main() {
+		ModelAndView mav = new ModelAndView();
+		mav.addObject(new User());
+		return mav;
+	}
 	@RequestMapping("user/userForm") 
 	public ModelAndView userForm() {
-		ModelAndView mav = new ModelAndView();
+		ModelAndView mav = new ModelAndView("user/login");
 		mav.addObject(new User());
 		return mav;
 	}
@@ -52,18 +58,19 @@ public class UserController {
 			if(user.getAddress1() != "") {
 				user.setAddress(user.getAddress()+" "+user.getAddress1());
 			}
+			user.setEmail(user.getEmail() +"@" +user.getEmail2());
 			user.setPassword(service.getHashvlaue(user.getPassword()));
 			service.userCreate(user);
-			mav.setViewName("user/login");
 			mav.addObject("user",user);
 		} catch(DataIntegrityViolationException e) {
 			bindResult.reject("error.duplicate.user");
 		}
+		mav.setViewName("user/main");
 		return mav;
 	}
 	@RequestMapping("user/emailConfirm")
 	public ModelAndView emailConfirm(User user,HttpServletRequest request) { // 이메일인증
-		ModelAndView mav = new ModelAndView("user/login");
+		ModelAndView mav = new ModelAndView("user/main");
 		String key =request.getParameter("authKey");
 		String email=service.Email(key);
 		service.updateAuth(email);
@@ -79,34 +86,28 @@ public class UserController {
 	@RequestMapping("user/login")
 	public ModelAndView loginForm(@Valid User user,BindingResult bindResult, HttpSession session) {
 		ModelAndView mav = new ModelAndView();
-		if(bindResult.hasErrors()) {
-			mav.getModel().putAll(bindResult.getModel());
-			return mav;
-		}
+		mav.addObject(new User());
 		//db에서 아이디의 회원 정보 조회하고 비밀번호 검증하여 session에 등록
 		//로그인 성공시 loginSuccess
 		try {
 			//u : 아이디에 해당하는 db의 사용자 정보 저장
 			User u = service.selectUser(user.getUserId());
 			if(u == null){
-				bindResult.reject("error.login.id");
+				throw new LoginException("입력 정보가 잘못되었습니다.","../user/main.shop");
+			}
+			if(!u.getUserauth().equals(1)) {
+				bindResult.reject("error.login.email");
 				mav.getModel().putAll(bindResult.getModel());
 				return mav;
 			}
-			
 			if(service.getHashvlaue(user.getPassword()).equals(u.getPassword())) { //아이디와 비밀번호가 일치
 				session.setAttribute("loginUser", u); //로그인 성공.
+				mav.setViewName("user/loginSuccess");
 			} else {
-				bindResult.reject("error.login.password");
-				mav.getModel().putAll(bindResult.getModel());
-				return mav;
+				throw new LoginException("입력 정보가 잘못되었습니다.","../user/main.shop");
 			}
 		} catch(Exception e) { 
-			//EmptyResultDataAccessException :해당 아이디 정보가 db에 없을 때. 스프링에서만 발생되는 예외.
-			e.printStackTrace();
-			bindResult.reject("error.user.login");
-			mav.getModel().putAll(bindResult.getModel());
-			return mav;
+			throw new LoginException("입력 정보가 잘못되었습니다.","../user/main.shop");
 		}
 		mav.setViewName("user/loginSuccess"); //로그인 성공하는 경우만 설정
 		return mav;
@@ -115,7 +116,7 @@ public class UserController {
 	public ModelAndView logout(HttpSession session) {
 		ModelAndView mav = new ModelAndView();
 		session.invalidate();
-		mav.setViewName("redirect:loginForm.shop"); 
+		mav.setViewName("redirect:main.shop"); 
 		return mav;
 	}
 	@RequestMapping("user/mypage")
@@ -135,21 +136,6 @@ public class UserController {
 		mav.addObject("salelist", salelist);
 		return mav;
 	}
-	@RequestMapping("user/updateForm")
-	public ModelAndView updateForm(String id, HttpSession session) {
-		ModelAndView mav = new ModelAndView();
-		User user = service.selectUser(id);
-		user.setEmail(CiperUtil.decrypt(user.getEmail(), user.getUserId()));
-		mav.addObject("user",user);
-		return mav;
-	}
-	/*
-	 * 1. 파라미터 값들을 User 객체에 저장, 유효성 검증
-	 * 2. AOP를 이용하여 로그인 안된 경우, 다른 사용자 정보 수정 안되도록 LoginAspect 클래스에 AOP메서드 추가
-	 * 3. 비밀번호가 일치하는 경우만 회원정보 수정
-	 * 4. 회원정보 수정 성공 : mypage.shop 페이지 이동
-	 *          수정 실패 : updateForm.shop 페이지 이동
-	 */
 	@RequestMapping("user/update")
 	public ModelAndView update(HttpSession session, @Valid User user,BindingResult bindResult) {
 		ModelAndView mav = new ModelAndView("user/updateForm");
@@ -160,7 +146,9 @@ public class UserController {
 		try {
 			User u = service.selectUser(user.getUserId());
 			if(service.getHashvlaue(user.getPassword()).equals(u.getPassword())) {
-				user.setEmail(CiperUtil.encrypt(user.getEmail(), user.getUserId()));
+				if(user.getAddress1() != "") {
+					user.setAddress(user.getAddress()+" "+user.getAddress1());
+				}
 				service.update(user);
 			} else {
 				bindResult.reject("error.login.password");
@@ -198,6 +186,7 @@ public class UserController {
 	public ModelAndView delete(String id, HttpSession session, String password) {
 		ModelAndView mav = new ModelAndView();
 		User u = (User)session.getAttribute("loginUser");
+		
 		if(u.getUserId().equals("admin")) {
 			if(u.getPassword().equals(service.getHashvlaue(password))) {
 				service.delete(id);
@@ -210,7 +199,7 @@ public class UserController {
 			if(u.getPassword().equals(service.getHashvlaue(password))) {
 				service.delete(id);
 				session.invalidate();
-				mav.setViewName("redirect:loginForm.shop");
+				mav.setViewName("redirect:main.shop");
 			} else {
 				throw new LoginException("오류","../user/delete.shop?id="+id);
 			}
@@ -221,14 +210,55 @@ public class UserController {
 	public ModelAndView idfind(User user, HttpServletRequest request) {
 		String email = request.getParameter("email");
 		ModelAndView mav = new ModelAndView();
+		mav.addObject("user",new User());
 		String id = service.findId(email);
 		mav.addObject("id",id);
 		if(id==null) {
-			throw new LoginException("입력 정보가 잘못되었습니다.","../user/loginForm.shop");
+			throw new LoginException("입력 정보가 잘못되었습니다.","../user/main.shop");
 		} else {
-			throw new LoginException("아이디는 "+id+"입니다.","../user/loginForm.shop");
+			throw new LoginException("아이디는 "+id+"입니다.","../user/main.shop");
 		}
 	}
+	@RequestMapping(value="user/passfind",method=RequestMethod.POST)
+	public ModelAndView passfind(User user, HttpServletRequest request) throws Exception {
+		ModelAndView mav = new ModelAndView();
+		String email = service.findEmail(user);
+		if(email != null) {
+			service.passEmail(email);
+			throw new LoginException("메일","../user/main.shop");
+		} else {
+			throw new LoginException("입력 정보가 잘못되었습니다.","../user/loginForm.shop");
+		}		
+	}
+	@RequestMapping(value="user/passChange",method=RequestMethod.GET)
+	public ModelAndView passChange(String id, HttpServletRequest request) {
+		ModelAndView mav = new ModelAndView();
+		String key = request.getParameter("authKey");
+		mav.addObject("authKey",key);
+		return mav;
+	}	
+	@RequestMapping(value="user/passChange",method=RequestMethod.POST)
+	public ModelAndView passChange(String authKey,String pass1,String pass2,HttpServletRequest request) { // 이메일인증
+		ModelAndView mav = new ModelAndView();	
+//		String key =request.getParameter("authKey");
+//		String pass1 = request.getParameter("pass1");
+//		String password = request.getParameter("pass2");
+		String email=service.Email(authKey);
+		if(pass1.equals(pass2)) {
+			try {
+				String pass = service.getHashvlaue(pass1);
+				service.passChange(pass,email);
+				service.delkey(authKey);
+				mav.setViewName("user/main");
+				return mav;
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new LoginException("비밀번호 수정중 오류발생.","../user/passChange.shop?authKey="+authKey);
+			}		
+		} else {
+			throw new LoginException("비밀번호 확인이 일치하지 않습니다.","../user/passChange.shop?authKey="+authKey);
+		}
+    }
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");

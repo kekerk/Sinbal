@@ -85,7 +85,7 @@ public class ShopService {
         MailHandler sendMail = new MailHandler(mailSender);
         sendMail.setSubject("[이메일 인증]");
         sendMail.setText(new StringBuffer().append("<h1>메일인증</h1>")
-                .append("<a href='http://localhost:8080/mavenshop4/user/emailConfirm.shop?authKey=")
+                .append("<a href='http://192.168.0.72:8080/mavenshop4/user/emailConfirm.shop?authKey=")
                 .append(key)
                 .append("' target='_blenk'>이메일 인증 확인</a>")
                 .toString());
